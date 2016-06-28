@@ -1,0 +1,12 @@
+PODS:
+  - OTKAnalytics (1.0.0)
+
+DEPENDENCIES:
+  - OTKAnalytics (= 1.0.0)
+
+SPEC CHECKSUMS:
+  OTKAnalytics: f750b242c566dc42e038c71600a34ea11a2ea056
+
+PODFILE CHECKSUM: f24d3c5c56c42a7ca7de6bbf16dff993f3d0b948
+
+COCOAPODS: 1.0.1

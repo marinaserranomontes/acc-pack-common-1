@@ -1,5 +1,6 @@
 package com.tokbox.android.accpack;
 
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -113,10 +114,6 @@ public class OneToOneCommunication implements
          * @param remoteView Indicates the subscriber view.
          */
         void onRemoteViewReady(View remoteView);
-
-        void onNewRemote(Subscriber subscriber);
-
-        void onNewLocal(Publisher publisher);
     }
 
     /*Constructor
@@ -467,8 +464,6 @@ public class OneToOneCommunication implements
     public void onStreamCreated(PublisherKit publisherKit, Stream stream) {
         isStarted = true;
 
-        onNewLocal((Publisher) publisherKit);
-
         if ( mStreams.size() > 0 ) {
             for ( Stream stream1 : mStreams ) {
                 subscribeToStream(stream1);
@@ -583,8 +578,6 @@ public class OneToOneCommunication implements
         if ( !subscriberKit.getStream().hasVideo() ) {
             attachSubscriberView(mSubscriber);
             setRemoteAudioOnly(true);
-
-            onNewRemote((Subscriber) subscriberKit);
         }
     }
 
@@ -695,18 +688,6 @@ public class OneToOneCommunication implements
         }
     }
 
-    protected void onNewRemote(Subscriber remote) {
-        if ( this.mListener != null ) {
-            this.mListener.onNewRemote(remote);
-        }
-    }
-
-    protected void onNewLocal(Publisher local) {
-        if ( this.mListener != null ) {
-            this.mListener.onNewLocal(local);
-        }
-    }
-
     public View getRemoteVideoView (){
         if ( mSubscriber != null ){
             return mSubscriber.getView();
@@ -736,6 +717,7 @@ public class OneToOneCommunication implements
         }
         return null;
     }
+
     public Subscriber getRemote(){
         if ( mSubscriber != null ){
             return mSubscriber;
@@ -743,7 +725,6 @@ public class OneToOneCommunication implements
         if ( mScreenSubscriber != null ){
             return mScreenSubscriber;
         }
-
         return null;
     }
 

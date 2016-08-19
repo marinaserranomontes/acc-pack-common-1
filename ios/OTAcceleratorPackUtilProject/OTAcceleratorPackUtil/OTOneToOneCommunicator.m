@@ -33,10 +33,6 @@ static NSString* const KLogVariationFailure = @"Failure";
 
 @implementation OTOneToOneCommunicator
 
-+ (instancetype)communicator {
-    return [OTOneToOneCommunicator sharedInstance];
-}
-
 + (instancetype)sharedInstance {
     
     [OTKLogger analyticsWithClientVersion:KLogClientVersion
@@ -66,7 +62,7 @@ static NSString* const KLogVariationFailure = @"Failure";
                    token:(NSString *)token {
 
     [OTAcceleratorSession setOpenTokApiKey:apiKey sessionId:sessionId token:token];
-    [OTOneToOneCommunicator sharedInstance];
+    [OTOneToOneCommunicator sharedInstance].session = [OTAcceleratorSession getAcceleratorPackSession];
 }
 
 - (void)connect {
@@ -196,7 +192,6 @@ static NSString* const KLogVariationFailure = @"Failure";
 
     self.publisher = nil;
     self.subscriber = nil;
-    
     
     [self notifiyAllWithSignal:OTSessionDidDisconnect
                          error:nil];

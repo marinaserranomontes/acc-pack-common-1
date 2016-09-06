@@ -11,7 +11,7 @@ android {
         versionCode 1
         versionName "1.0"
         project.archivesBaseName = "opentok-android-accelerator-pack"
-        project.version = "1.0.5"
+        project.version = "1.0.6"
     }
     buildTypes {
         release {
@@ -34,7 +34,7 @@ android {
 dependencies {
     compile 'com.android.support:appcompat-v7:23.2.1'
     testCompile 'junit:junit:4.+'
-    compile 'com.opentok.android:opentok-android-sdk:2.8.+'
+    compile 'com.opentok.android:opentok-android-sdk:2.9.+'
     compile 'com.opentok.android:opentok-solutions-logging:+'
 }
 

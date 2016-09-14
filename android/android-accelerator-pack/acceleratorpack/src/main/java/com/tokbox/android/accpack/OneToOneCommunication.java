@@ -39,6 +39,7 @@ public class OneToOneCommunication implements
     private boolean mLocalVideo = true;
     private boolean mRemoteAudio = true;
     private boolean mRemoteVideo = true;
+    private boolean mCycleCamera = false;
 
     private boolean isRemote = false;
     private boolean startPublish = false;
@@ -170,6 +171,11 @@ public class OneToOneCommunication implements
             if (mPublisher == null) {
                 mPublisher = new Publisher(mContext, "myPublisher");
                 mPublisher.setPublisherListener(this);
+                mPublisher.setPublishVideo(mLocalVideo);
+                mPublisher.setPublishAudio(mLocalAudio);
+                if (mCycleCamera) {
+                    mPublisher.cycleCamera();
+                }
                 attachPublisherView();
                 mSession.publish(mPublisher);
                 startPublish = false;
@@ -284,6 +290,7 @@ public class OneToOneCommunication implements
      * Cycles between cameras, if there are multiple cameras on the device.
      */
     public void swapCamera() {
+        this.mCycleCamera = true;
         if ( mPublisher != null ) {
             mPublisher.cycleCamera();
         }
@@ -423,18 +430,18 @@ public class OneToOneCommunication implements
     }
 
     private void attachSubscriberView(Subscriber subscriber) {
+        if ( subscriber!= null && subscriber.getStream()!= null ) {
+            if (subscriber.getStream().getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen) {
+                subscriber.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
+                        BaseVideoRenderer.STYLE_VIDEO_FIT);
+            } else {
+                subscriber.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
+                        BaseVideoRenderer.STYLE_VIDEO_FILL);
 
-        if ( subscriber.getStream().getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen ) {
-            subscriber.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
-                    BaseVideoRenderer.STYLE_VIDEO_FIT);
+            }
+            isRemote = true;
+            onRemoteViewReady(subscriber.getView());
         }
-        else {
-            subscriber.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
-                    BaseVideoRenderer.STYLE_VIDEO_FILL);
-
-        }
-        isRemote = true;
-        onRemoteViewReady(subscriber.getView());
     }
 
     private void setRemoteAudioOnly(boolean audioOnly) {
@@ -728,6 +735,15 @@ public class OneToOneCommunication implements
             return mScreenSubscriber;
         }
         return null;
+    }
+
+    public void setRemoteFill(boolean fill){
+        if ( mScreenSubscriber != null && fill ){
+            mScreenSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+        }
+        if ( mSubscriber != null && fill ){
+            mSubscriber.getRenderer().setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+        }
     }
 
     private void addLogEvent(String action, String variation){

@@ -3,6 +3,7 @@ package com.tokbox.android.accpack;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.hardware.Camera;
 import android.util.Log;
 import android.view.View;
 
@@ -22,7 +23,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class OneToOneCommunication implements
-        AccPackSession.SessionListener, Publisher.PublisherListener, Subscriber.SubscriberListener, Subscriber.VideoListener {
+        AccPackSession.SessionListener, Publisher.PublisherListener, Publisher.CameraListener, Subscriber.SubscriberListener, Subscriber.VideoListener {
 
     private static final String LOGTAG = OneToOneCommunication.class.getName();
     private Context mContext;
@@ -39,7 +40,8 @@ public class OneToOneCommunication implements
     private boolean mLocalVideo = true;
     private boolean mRemoteAudio = true;
     private boolean mRemoteVideo = true;
-    private boolean mCycleCamera = false;
+
+    private int mCameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
     private boolean isRemote = false;
     private boolean startPublish = false;
@@ -47,7 +49,6 @@ public class OneToOneCommunication implements
     private boolean isScreensharing = false;
 
     protected Listener mListener;
-
 
     private String mSessionId;
     private String mApiKey;
@@ -173,9 +174,6 @@ public class OneToOneCommunication implements
                 mPublisher.setPublisherListener(this);
                 mPublisher.setPublishVideo(mLocalVideo);
                 mPublisher.setPublishAudio(mLocalAudio);
-                if (mCycleCamera) {
-                    mPublisher.cycleCamera();
-                }
                 attachPublisherView();
                 mSession.publish(mPublisher);
                 startPublish = false;
@@ -241,24 +239,27 @@ public class OneToOneCommunication implements
      *              <code>false</code>).
      */
     public void enableLocalMedia(MediaType type, boolean value) {
-        if ( mPublisher != null ) {
+
             switch (type) {
                 case AUDIO:
-                    mPublisher.setPublishAudio(value);
+                    if ( mPublisher != null ) {
+                        mPublisher.setPublishAudio(value);
+                    }
                     this.mLocalAudio = value;
                     break;
 
                 case VIDEO:
-                    mPublisher.setPublishVideo(value);
                     this.mLocalVideo = value;
-                    if (value) {
-                        mPublisher.getView().setVisibility(View.VISIBLE);
-                    } else {
-                        mPublisher.getView().setVisibility(View.GONE);
+                    if ( mPublisher != null ) {
+                        mPublisher.setPublishVideo(value);
+                        if (value) {
+                            mPublisher.getView().setVisibility(View.VISIBLE);
+                        } else {
+                            mPublisher.getView().setVisibility(View.GONE);
+                        }
                     }
                     break;
             }
-        }
     }
 
     /**
@@ -290,7 +291,6 @@ public class OneToOneCommunication implements
      * Cycles between cameras, if there are multiple cameras on the device.
      */
     public void swapCamera() {
-        this.mCycleCamera = true;
         if ( mPublisher != null ) {
             mPublisher.cycleCamera();
         }
@@ -366,6 +366,15 @@ public class OneToOneCommunication implements
      */
     public boolean isScreensharing() {
         return isScreensharing;
+    }
+
+    /**
+     * Check the active camera
+     *
+     * @return The ID of the active camera.
+     */
+    public int getCameraId() {
+        return mCameraId;
     }
 
     public void reloadViews() {
@@ -641,6 +650,17 @@ public class OneToOneCommunication implements
     @Override
     public void onVideoDisableWarningLifted(SubscriberKit subscriberKit) {
         Log.i(LOGTAG, "Video may no longer be disabled as stream quality improved.");
+    }
+
+    @Override
+    public void onCameraChanged(Publisher publisher, int i) {
+        Log.i(LOGTAG, "Camera changed: "+i);
+        mCameraId = i;
+    }
+
+    @Override
+    public void onCameraError(Publisher publisher, OpentokError opentokError) {
+        Log.i(LOGTAG, "Camera error: ");
     }
 
     public AccPackSession getSession() {

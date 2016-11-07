@@ -1,10 +1,8 @@
 package com.tokbox.android.otsdkwrapper.wrapper;
 
 import android.content.Context;
-
 import android.util.Log;
 import android.view.View;
-
 
 import com.opentok.android.BaseVideoRenderer;
 import com.opentok.android.Connection;
@@ -453,7 +451,11 @@ public class OTWrapper {
      * @param listener
      */
     public void removeBasicListener(BasicListener listener) {
-        mBasicListeners.remove(listener);
+        if (listener != null) {
+            mBasicListeners.remove(listener);
+        } else {
+            mBasicListeners.clear();
+        }
     }
 
     /**
@@ -496,6 +498,14 @@ public class OTWrapper {
             internalSendSignal(signalInfo);
         }
     }
+    /**
+     * Whether the local MediaType is enabled (<code>true</code>) or not (
+     * <code>false</code>).
+     */
+    public boolean getLocalMediaEnabled(MediaType type) {
+        return (mPublisher != null) &&
+          (type == MediaType.VIDEO ? mPublisher.getPublishVideo() : mPublisher.getPublishAudio());
+    }
 
     /**
      * Returns the {@link StreamStatus} of the local.
@@ -504,10 +514,24 @@ public class OTWrapper {
      */
     public StreamStatus getLocalStreamStatus() {
         if (mPublisher != null) {
+            Stream stream = mPublisher.getStream();
+            boolean hasAudio = true;
+            boolean hasVideo = true;
+            int videoHeight = 0;
+            int videoWidth = 0;
+            Stream.StreamVideoType streamVideoType = Stream.StreamVideoType.StreamVideoTypeCamera;
+            if (stream != null) {
+                hasAudio = stream.hasAudio();
+                hasVideo = stream.hasVideo();
+                streamVideoType = stream.getStreamVideoType();
+                videoHeight = stream.getVideoHeight();
+                videoWidth = stream.getVideoWidth();
+            }
+
             return new StreamStatus(mPublisher.getView(),
                     mPublisher.getPublishAudio(), mPublisher.getPublishVideo(),
-                    mPublisher.getStream().hasAudio(), mPublisher.getStream().hasVideo(), mPublisher.getStream().getStreamVideoType(),
-                        mPublisher.getStream().getVideoWidth(), mPublisher.getStream().getVideoHeight());
+                    hasAudio, hasVideo, streamVideoType,
+                        videoWidth, videoHeight);
         }
         return null;
     }

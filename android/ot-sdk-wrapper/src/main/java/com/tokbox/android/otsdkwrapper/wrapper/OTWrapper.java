@@ -1,6 +1,7 @@
 package com.tokbox.android.otsdkwrapper.wrapper;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.View;
 
@@ -13,6 +14,8 @@ import com.opentok.android.Session;
 import com.opentok.android.Stream;
 import com.opentok.android.Subscriber;
 import com.opentok.android.SubscriberKit;
+import com.tokbox.android.logging.OTKAnalytics;
+import com.tokbox.android.logging.OTKAnalyticsData;
 import com.tokbox.android.otsdkwrapper.listeners.AdvancedListener;
 import com.tokbox.android.otsdkwrapper.listeners.BaseOTListener;
 import com.tokbox.android.otsdkwrapper.listeners.BasicListener;
@@ -26,6 +29,7 @@ import com.tokbox.android.otsdkwrapper.signal.SignalInfo;
 import com.tokbox.android.otsdkwrapper.signal.SignalProcessorThread;
 import com.tokbox.android.otsdkwrapper.signal.SignalProtocol;
 import com.tokbox.android.otsdkwrapper.utils.Callback;
+import com.tokbox.android.otsdkwrapper.utils.ClientLog;
 import com.tokbox.android.otsdkwrapper.utils.MediaType;
 import com.tokbox.android.otsdkwrapper.utils.OTConfig;
 import com.tokbox.android.otsdkwrapper.utils.PreviewConfig;
@@ -38,6 +42,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.UUID;
 
 /**
  * Represents an OpenTok object to enable a video communication.
@@ -88,6 +93,10 @@ public class OTWrapper {
   private BaseVideoRenderer mVideoRemoteRenderer;
   private BaseVideoRenderer mScreenRemoteRenderer;
 
+  //Analytics for internal use
+  private OTKAnalyticsData mAnalyticsData;
+  private OTKAnalytics mAnalytics;
+
   /**
    * Creates a OTWrapper instance.
    *
@@ -103,6 +112,9 @@ public class OTWrapper {
     mSignalListeners = new Hashtable<String, ArrayList<SignalListener>>();
     mBasicListeners = new ArrayList<RetriableBasicListener<OTWrapper>>();
     mAdvancedListeners = new ArrayList<RetriableAdvancedListener<OTWrapper>>();
+
+    //init analytics
+    initAnalytics();
   }
 
   /**
@@ -150,6 +162,8 @@ public class OTWrapper {
     mOlderThanMe = 0;
     mConnectionsCount = 0;
     mSession.connect(mOTConfig.getToken());
+
+    addLogEvent(ClientLog.LOG_ACTION_CONNECT, ClientLog.LOG_VARIATION_ATTEMPT);
   }
 
   /**
@@ -162,6 +176,8 @@ public class OTWrapper {
   public void disconnect(){
     if (mSession != null ){
       mSession.disconnect();
+
+      addLogEvent(ClientLog.LOG_ACTION_DISCONNECT, ClientLog.LOG_VARIATION_ATTEMPT);
     }
   }
 
@@ -170,6 +186,7 @@ public class OTWrapper {
    * @return the own connectionID
    */
   public String getOwnConnId() {
+    //todo log
     return mSessionConnection != null ? mSessionConnection.getConnectionId() : null;
   }
 
@@ -178,6 +195,9 @@ public class OTWrapper {
    * @return the number of active connections.
    */
   public int getConnectionsCount() {
+    addLogEvent(ClientLog.LOG_ACTION_CONNECTIONS_COUNT, ClientLog.LOG_VARIATION_ATTEMPT);
+    addLogEvent(ClientLog.LOG_ACTION_CONNECT, ClientLog.LOG_VARIATION_SUCCESS);
+
     return mConnectionsCount;
   }
 
@@ -187,6 +207,8 @@ public class OTWrapper {
    * <code>false</code>).
    */
   public boolean isTheOldestConnection(){
+    //todo logging
+
     return mOlderThanMe <= 0;
   }
 
@@ -199,10 +221,15 @@ public class OTWrapper {
   public int compareConnectionsTimes(String connectionId){
     int age = 0;
 
+    addLogEvent(ClientLog.LOG_ACTION_COMPARE_CONNECTIONS, ClientLog.LOG_VARIATION_ATTEMPT);
+
     if (mSession != null){
       age = mSession.getConnection().
         getCreationTime().compareTo(mConnections.get(connectionId).getCreationTime());
     }
+
+    addLogEvent(ClientLog.LOG_ACTION_COMPARE_CONNECTIONS, ClientLog.LOG_VARIATION_SUCCESS);
+
     return age;
   }
 
@@ -212,6 +239,8 @@ public class OTWrapper {
    * @param config The configuration of the preview
    */
   public void startPreview(PreviewConfig config) {
+    addLogEvent(ClientLog.LOG_ACTION_START_PREVIEW, ClientLog.LOG_VARIATION_ATTEMPT);
+
     mPreviewConfig = config;
     if (mPublisher == null && !isPreviewing) {
       createPublisher();
@@ -219,12 +248,15 @@ public class OTWrapper {
       mPublisher.startPreview();
       isPreviewing = true;
     }
+    addLogEvent(ClientLog.LOG_ACTION_START_PREVIEW, ClientLog.LOG_VARIATION_SUCCESS);
   }
 
   /**
    * Call to stop the camera's video in the Preview's view.
    */
   public void stopPreview() {
+    addLogEvent(ClientLog.LOG_ACTION_STOP_PREVIEW, ClientLog.LOG_VARIATION_ATTEMPT);
+
     if (mPublisher != null && isPreviewing) {
       mPublisher.destroy();
       dettachPublisherView();
@@ -232,6 +264,7 @@ public class OTWrapper {
       isPreviewing = false;
       startPublishing = false;
     }
+    addLogEvent(ClientLog.LOG_ACTION_STOP_PREVIEW, ClientLog.LOG_VARIATION_SUCCESS);
   }
 
   /**
@@ -240,6 +273,8 @@ public class OTWrapper {
    * @param screensharing Whether to indicate the video or the screen streaming.
    */
   public void startSharingMedia(PreviewConfig config, boolean screensharing) {
+    addLogEvent(ClientLog.LOG_ACTION_STOP_PREVIEW, ClientLog.LOG_VARIATION_ATTEMPT);
+
     if (!screensharing) {
       mPreviewConfig = config;
       startPublishing = true;
@@ -897,6 +932,31 @@ public class OTWrapper {
 
   }
 
+  private void initAnalytics (){
+    //Init the analytics logging
+    String source = mContext.getPackageName();
+
+    SharedPreferences prefs = mContext.getSharedPreferences("opentok", Context.MODE_PRIVATE);
+    String guidVSol = prefs.getString("guidVSol", null);
+    if (null == guidVSol) {
+      guidVSol = UUID.randomUUID().toString();
+      prefs.edit().putString("guidVSol", guidVSol).commit();
+    }
+
+    mAnalyticsData = new OTKAnalyticsData.Builder(ClientLog.LOG_CLIENT_VERSION, source, ClientLog.LOG_COMPONENTID, guidVSol).build();
+    mAnalytics = new OTKAnalytics(mAnalyticsData);
+
+    mAnalyticsData.setSessionId(getOTConfig().getSessionId());
+    mAnalyticsData.setPartnerId(getOTConfig().getApiKey());
+    mAnalytics. setData(mAnalyticsData);
+  }
+
+  private void addLogEvent(String action, String variation){
+    if ( mAnalytics!= null ) {
+      mAnalytics.logEvent(action, variation);
+    }
+  }
+
   //Implements Basic listeners: Session.SessionListener, Session.ConnectionListener,
   // Session.SignalListener, Publisher.PublisherListener
   private Session.SessionListener mSessionListener = new Session.SessionListener() {
@@ -916,6 +976,12 @@ public class OTWrapper {
                                                          mSessionConnection.getData());
         }
       }
+
+      mAnalyticsData.setConnectionId(mSessionConnection.getConnectionId());
+      mAnalytics. setData(mAnalyticsData);
+
+      addLogEvent(ClientLog.LOG_ACTION_CONNECT, ClientLog.LOG_VARIATION_SUCCESS);
+
     }
 
     @Override
@@ -928,6 +994,8 @@ public class OTWrapper {
                                                             mSessionConnection.getData());
         }
       }
+
+      addLogEvent(ClientLog.LOG_ACTION_DISCONNECT, ClientLog.LOG_VARIATION_SUCCESS);
 
       cleanup();
     }

@@ -10,6 +10,10 @@ public class OTConfig {
 
     private static final String LOG_TAG = OTConfig.class.getSimpleName();
 
+    public static final String LOG_VARIATION_ATTEMPT = "Attempt";
+    public static final String LOG_VARIATION_ERROR = "Failure";
+    public static final String LOG_VARIATION_SUCCESS = "Success";
+
     private static final int MAX_LENGTH_NAME = 50;
 
     String sessionId; //required

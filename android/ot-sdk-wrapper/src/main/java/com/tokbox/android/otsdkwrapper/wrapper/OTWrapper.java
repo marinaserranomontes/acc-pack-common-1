@@ -237,9 +237,9 @@ public class OTWrapper {
   /**
    * Starts the local streaming video
    * @param config The configuration of the preview
-   * @param screensharing Whether to indicate the video or the screen streaming.
+   * @param screensharing Whether to indicate the camera or the screen streaming.
    */
-  public void startSharingMedia(PreviewConfig config, boolean screensharing) {
+  public void startPublishingMedia(PreviewConfig config, boolean screensharing) {
     if (!screensharing) {
       mPreviewConfig = config;
       startPublishing = true;
@@ -260,9 +260,9 @@ public class OTWrapper {
 
   /**
    * Stops the local streaming video.
-   * @param screensharing Wheter to indicate the video or the screen streaming
+   * @param screensharing Whether to indicate the camera or the screen streaming
    */
-  public void stopSharingMedia(Boolean screensharing) {
+  public void stopPublishingMedia(Boolean screensharing) {
     if (mSession != null ) {
       if (!screensharing) {
         if (mPublisher != null && startPublishing) {
@@ -294,7 +294,7 @@ public class OTWrapper {
    * @return Whether the local MediaType is enabled (<code>true</code>) or not (
    * <code>false</code>)
    */
-  public boolean isLocalMediaEnabled(MediaType type) {
+  public boolean isPublishingMediaEnabled(MediaType type) {
     return (mPublisher != null) &&
       (type == MediaType.VIDEO ? mPublisher.getPublishVideo() : mPublisher.getPublishAudio());
   }
@@ -305,7 +305,7 @@ public class OTWrapper {
    * @param enabled Whether to enable media (<code>true</code>) or not (
    *                     <code>false</code>).
    */
-  public void enableLocalMedia(MediaType type, boolean enabled){
+  public void enablePublishingMedia(MediaType type, boolean enabled){
     if ( mPublisher != null ) {
       switch (type) {
         case AUDIO:
@@ -329,7 +329,7 @@ public class OTWrapper {
    * @param enabled Whether to enable MediaType (<code>true</code>) or not (
    *                     <code>false</code>).
    */
-  public void enableRemoteMedia(String remoteId, MediaType type, boolean enabled) {
+  public void enableReceivedMedia(String remoteId, MediaType type, boolean enabled) {
     if (remoteId != null ) {
       enableRemoteMedia(mSubscribers.get(remoteId), type, enabled);
     } else {
@@ -346,7 +346,7 @@ public class OTWrapper {
    * @return Whether the remote MediaType is enabled (<code>true</code>) or not (
    * <code>false</code>).
    */
-  public boolean isRemoteMediaEnabled(String remoteId, MediaType type) {
+  public boolean isReceivedMediaEnabled(String remoteId, MediaType type) {
     Subscriber sub = mSubscribers.get(remoteId);
     boolean returnedValue = false;
     if (sub != null) {
@@ -545,7 +545,7 @@ public class OTWrapper {
    * @return The {@link StreamStatus} of the local.
    *
    */
-  public StreamStatus getLocalStreamStatus() {
+  public StreamStatus getPublishingStreamStatus() {
     if (mPublisher != null) {
       Stream stream = mPublisher.getStream();
       boolean hasAudio = true;
@@ -605,7 +605,7 @@ public class OTWrapper {
    * Sets the Local Video Style
    * @param style VideoScale value: FILL or FIT
    */
-  public void setLocalStyle(VideoScale style) {
+  public void setPublishingStyle(VideoScale style) {
     if ( style == VideoScale.FILL ){
       mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
     }

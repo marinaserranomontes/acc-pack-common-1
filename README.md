@@ -1,6 +1,6 @@
 ![logo](./tokbox-logo.png)
 
-# Wrapper<br/>Version 1.0.0
+# SDK Wrapper<br/>Version 1.0.0
 
 The Wrapper is a library which makes easier the use of the OpenTok API for the different platforms. 
 The Wrapper includes the audio-video communication logic, the signaling flows and some advanced features of the SDK, like video quality warnings, reconnection,...etc

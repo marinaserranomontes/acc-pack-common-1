@@ -822,7 +822,7 @@ public class OTWrapper {
   }
 
   private void addNewRemote(Stream stream){
-    if (mOTConfig.isSubscribeAutomatically()) {
+    if (mOTConfig.shouldSubscribeAutomatically()) {
       Subscriber sub = new Subscriber(mContext, stream);
       sub.setVideoListener(mVideoListener);
       sub.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
@@ -1096,7 +1096,7 @@ public class OTWrapper {
       }
 
       //check subscribe to self
-      if ( mOTConfig.isSubscribeToSelf() ){
+      if ( mOTConfig.shouldSubscribeToSelf() ){
         addNewRemote(stream);
       }
     }

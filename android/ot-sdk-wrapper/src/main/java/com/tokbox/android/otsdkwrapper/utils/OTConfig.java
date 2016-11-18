@@ -27,6 +27,8 @@ public class OTConfig {
         this.sessionId = builder.sessionId;
         this.token = builder.token;
         this.apiKey = builder.apiKey;
+        this.subscribeAutomatically = builder.subscribeAutomatically;
+        this.subscribeToSelf = builder.subscribeToSelf;
     }
 
     /**

@@ -294,7 +294,7 @@ public class OTWrapper {
    * @return Whether the local MediaType is enabled (<code>true</code>) or not (
    * <code>false</code>)
    */
-  public boolean isPublishingMediaEnabled(MediaType type) {
+  public boolean isLocalMediaEnabled(MediaType type) {
     return (mPublisher != null) &&
       (type == MediaType.VIDEO ? mPublisher.getPublishVideo() : mPublisher.getPublishAudio());
   }
@@ -305,7 +305,7 @@ public class OTWrapper {
    * @param enabled Whether to enable media (<code>true</code>) or not (
    *                     <code>false</code>).
    */
-  public void enablePublishingMedia(MediaType type, boolean enabled){
+  public void enableLocalMedia(MediaType type, boolean enabled){
     if ( mPublisher != null ) {
       switch (type) {
         case AUDIO:
@@ -545,7 +545,7 @@ public class OTWrapper {
    * @return The {@link StreamStatus} of the local.
    *
    */
-  public StreamStatus getPublishingStreamStatus() {
+  public StreamStatus getLocalStreamStatus() {
     if (mPublisher != null) {
       Stream stream = mPublisher.getStream();
       boolean hasAudio = true;
@@ -605,7 +605,7 @@ public class OTWrapper {
    * Sets the Local Video Style
    * @param style VideoScale value: FILL or FIT
    */
-  public void setPublishingStyle(VideoScale style) {
+  public void setLocalStyle(VideoScale style) {
     if ( style == VideoScale.FILL ){
       mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
     }
@@ -616,19 +616,17 @@ public class OTWrapper {
 
   /**
    * Sets a custom video renderer for the remote
-   * @param renderer
+   * @param renderer The custom video renderer
+   * @param remoteScreen Whether the renderer is applied to the remote received screen or not.
    */
-  public void setRemoteVideoRenderer(BaseVideoRenderer renderer) {
+  public void setRemoteVideoRenderer(BaseVideoRenderer renderer, boolean remoteScreen) {
     //to-review: it will apply to all the subscribers
-    mVideoRemoteRenderer = renderer;
-  }
-
-  /**
-   * Sets a custom screen renderer for the remote
-   * @param renderer
-   */
-  public void setRemoteScreenRenderer(BaseVideoRenderer renderer) {
-    mScreenRemoteRenderer = renderer;
+    if ( remoteScreen ){
+      mScreenRemoteRenderer = renderer;
+    }
+    else {
+      mVideoRemoteRenderer = renderer;
+    }
   }
 
   //Private methods
@@ -823,6 +821,32 @@ public class OTWrapper {
     }
   }
 
+  private void addNewRemote(Stream stream){
+    if (mOTConfig.isSubscribeAutomatically()) {
+      Subscriber sub = new Subscriber(mContext, stream);
+      sub.setVideoListener(mVideoListener);
+      sub.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+      String subId = stream.getStreamId();
+      mSubscribers.put(subId, sub);
+      sub.setSubscriberListener(mSubscriberListener);
+      if (mBasicListeners != null) {
+        for (BasicListener listener : mBasicListeners) {
+          ((RetriableBasicListener) listener).onRemoteJoined(SELF, subId);
+        }
+      }
+      if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeCamera &&
+              mVideoRemoteRenderer != null) {
+        sub.setRenderer(mVideoRemoteRenderer);
+      } else {
+        if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen &&
+                mScreenRemoteRenderer != null) {
+          sub.setRenderer(mScreenRemoteRenderer);
+        }
+      }
+      mSession.subscribe(sub);
+    }
+  }
+
   //Signal protocol
   /**
    * Note that I'm not absolutely sure that the semantics of the normal SignalPipe are enough
@@ -935,28 +959,7 @@ public class OTWrapper {
     @Override
     public void onStreamReceived(Session session, Stream stream) {
       Log.d(LOG_TAG, "OnStreamReceived: " + stream.getConnection().getData());
-      Subscriber sub = new Subscriber(mContext, stream);
-      sub.setVideoListener(mVideoListener);
-      sub.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-      String subId = stream.getStreamId();
-      mSubscribers.put(subId, sub);
-      sub.setSubscriberListener(mSubscriberListener);
-      if (mBasicListeners != null) {
-        for (BasicListener listener : mBasicListeners) {
-          ((RetriableBasicListener)listener).onRemoteJoined(SELF, subId);
-        }
-      }
-      if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeCamera &&
-          mVideoRemoteRenderer != null) {
-        sub.setRenderer(mVideoRemoteRenderer);
-      }
-      else {
-        if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen &&
-            mScreenRemoteRenderer != null) {
-          sub.setRenderer(mScreenRemoteRenderer);
-        }
-      }
-      mSession.subscribe(sub);
+      addNewRemote(stream);
     }
 
     @Override
@@ -1089,7 +1092,12 @@ public class OTWrapper {
         isPublishing = true;
       }
       for (BasicListener listener : mBasicListeners) {
-        ((RetriableBasicListener) listener).onStartedSharingMedia(SELF, screensharing);
+        ((RetriableBasicListener) listener).onStartedPublishingMedia(SELF, screensharing);
+      }
+
+      //check subscribe to self
+      if ( mOTConfig.isSubscribeToSelf() ){
+        addNewRemote(stream);
       }
     }
 
@@ -1104,7 +1112,7 @@ public class OTWrapper {
         isPublishing = false;
       }
       for (BasicListener listener : mBasicListeners) {
-        ((RetriableBasicListener) listener).onStoppedSharingMedia(SELF, screensharing);
+        ((RetriableBasicListener) listener).onStoppedPublishingMedia(SELF, screensharing);
       }
     }
 
@@ -1162,7 +1170,7 @@ public class OTWrapper {
       if ( mBasicListeners != null ) {
         for (BasicListener listener : mBasicListeners) {
           ((RetriableBasicListener) listener).
-            onRemoteVideoChange(SELF, subscriber.getStream().getStreamId(), reason, false,
+            onRemoteVideoChanged(SELF, subscriber.getStream().getStreamId(), reason, false,
                                 subscriber.getSubscribeToVideo());
         }
       }
@@ -1173,7 +1181,7 @@ public class OTWrapper {
       if ( mBasicListeners != null ) {
         for (BasicListener listener : mBasicListeners) {
           ((RetriableBasicListener) listener).
-            onRemoteVideoChange(SELF, subscriber.getStream().getStreamId(), reason, true,
+            onRemoteVideoChanged(SELF, subscriber.getStream().getStreamId(), reason, true,
                                 subscriber.getSubscribeToVideo());
         }
       }

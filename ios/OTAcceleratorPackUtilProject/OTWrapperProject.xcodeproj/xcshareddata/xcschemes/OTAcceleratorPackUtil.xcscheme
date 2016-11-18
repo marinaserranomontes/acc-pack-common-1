@@ -17,7 +17,7 @@
                BlueprintIdentifier = "A0127AA91D34652500CDA3F5"
                BuildableName = "OTAcceleratorPackUtil.framework"
                BlueprintName = "OTAcceleratorPackUtil"
-               ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+               ReferencedContainer = "container:OTWrapperProject.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -48,7 +48,7 @@
             BlueprintIdentifier = "A0127AA91D34652500CDA3F5"
             BuildableName = "OTAcceleratorPackUtil.framework"
             BlueprintName = "OTAcceleratorPackUtil"
-            ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+            ReferencedContainer = "container:OTWrapperProject.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -66,7 +66,7 @@
             BlueprintIdentifier = "A0127AA91D34652500CDA3F5"
             BuildableName = "OTAcceleratorPackUtil.framework"
             BlueprintName = "OTAcceleratorPackUtil"
-            ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+            ReferencedContainer = "container:OTWrapperProject.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>

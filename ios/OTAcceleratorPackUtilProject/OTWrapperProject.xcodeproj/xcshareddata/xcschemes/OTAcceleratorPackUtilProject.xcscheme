@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A0127A8A1D34651B00CDA3F5"
-               BuildableName = "OTAcceleratorPackUtilProject.app"
-               BlueprintName = "OTAcceleratorPackUtilProject"
-               ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+               BuildableName = "OTWrapperProject.app"
+               BlueprintName = "OTWrapperProject"
+               ReferencedContainer = "container:OTWrapperProject.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A0127A8A1D34651B00CDA3F5"
-            BuildableName = "OTAcceleratorPackUtilProject.app"
-            BlueprintName = "OTAcceleratorPackUtilProject"
-            ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+            BuildableName = "OTWrapperProject.app"
+            BlueprintName = "OTWrapperProject"
+            ReferencedContainer = "container:OTWrapperProject.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A0127A8A1D34651B00CDA3F5"
-            BuildableName = "OTAcceleratorPackUtilProject.app"
-            BlueprintName = "OTAcceleratorPackUtilProject"
-            ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+            BuildableName = "OTWrapperProject.app"
+            BlueprintName = "OTWrapperProject"
+            ReferencedContainer = "container:OTWrapperProject.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
@@ -82,9 +82,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A0127A8A1D34651B00CDA3F5"
-            BuildableName = "OTAcceleratorPackUtilProject.app"
-            BlueprintName = "OTAcceleratorPackUtilProject"
-            ReferencedContainer = "container:OTAcceleratorPackUtilProject.xcodeproj">
+            BuildableName = "OTWrapperProject.app"
+            BlueprintName = "OTWrapperProject"
+            ReferencedContainer = "container:OTWrapperProject.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

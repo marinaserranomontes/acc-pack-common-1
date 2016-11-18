@@ -5,7 +5,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <OTAcceleratorPackUtil/OTAcceleratorSession.h>
+#import "OTStreamStatus.h"
+#import <OpenTok/OpenTok.h>
 
 typedef enum : NSUInteger {
     OTSDKWrapperMediaTypeAudio,
@@ -18,6 +19,9 @@ typedef enum : NSUInteger {
 - (OTSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper;
 
 @end
+
+@protocol OTBasicDegate;
+@protocol OTAdvancedDegate;
 
 @interface OTSDKWrapper : NSObject
 
@@ -41,6 +45,7 @@ typedef enum : NSUInteger {
 - (NSError *)broadcastSignalWithType:(NSString *)type
                                 data:(id)string;
 
+- (void) connect;
 /**
  *  Force un-publish/un-subscribe, disconnect from session and clean everything
  */
@@ -56,36 +61,45 @@ typedef enum : NSUInteger {
 - (NSTimeInterval)intervalWithConnectionId:(NSString *)connectionId;
 
 #pragma mark - publisher
+
+@property (readonly, nonatomic) OTStreamStatus* publishingStreamStatus; //localStreamStatus
+
 - (UIView *)captureAudioVideo;
 
-- (NSError *)publish;
+- (NSError *)startPublishing;
 
 // if we merge screen sharing accelerator pack, this can be the API.
-- (NSError *)publishWithView:(UIView *)view;
+- (NSError *)startPublishingWithView:(UIView *)view;
 
 - (NSError *)stopPublishing;
 
 - (void)enablePublishingMedia:(OTSDKWrapperMediaType)mediaType
                       enabled:(BOOL)enabled;
 
+- (BOOL) isPublishingMedia:(OTSDKWrapperMediaType)mediaType;
+
 - (void)switchCamera;
 
 - (void)switchVideoViewScaleBehavior;
 
-#pragma mark - subscirbers
-- (void)newParticipantObserver:(void (^)(NSString *streamId))completion;
+#pragma mark - subscribers
+/*- (void)newParticipantObserver:(void (^)(NSString *streamId))completion;
 
 - (UIView *)addParticipantWithStreamId:(NSString *)streamId
                                  error:(NSError **)error;
 
 - (NSError *)removeParticipantWithStreamId:(NSString *)streamId;
 
-- (void)participantsLeaveObserver:(void (^)(NSString *streamId))completion;
+- (void)participantsLeaveObserver:(void (^)(NSString *streamId))completion;*/
 
-- (void)enableParticipantWithStreamId:(NSString *)streamId
-                                media:(OTSDKWrapperMediaType)mediaType
-                              enabled:(BOOL)enabled;
+- (void)enableReceivedMedia:(OTSDKWrapperMediaType)mediaType
+    participantWithStreamId: (NSString *) streamId
+                    enabled:(BOOL)enabled;
+
+- (BOOL) isReceivedMedia:(OTSDKWrapperMediaType)mediaType;
 
 - (void)switchParticipantVideoViewScaleBehaviorWithStreamId:(NSString *)streamId;
+
+- (OTStreamStatus *) streamStatusWithStreamId: (NSString *)streamId;
 
 @end

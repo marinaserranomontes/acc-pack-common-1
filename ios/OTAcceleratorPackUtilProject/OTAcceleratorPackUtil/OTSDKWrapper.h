@@ -58,21 +58,24 @@ typedef enum : NSUInteger {
 
 @property (readonly, nonatomic) NSString *name;
 
-- (instancetype)initWithDataSource:(id<OTSDKWrapperDataSource>)dataSource;
+/*- (instancetype)initWithDataSource:(id<OTSDKWrapperDataSource>)dataSource;
 
 - (instancetype)initWithName:(NSString *)name
-                  dataSource:(id<OTSDKWrapperDataSource>)dataSource;
+                  dataSource:(id<OTSDKWrapperDataSource>)dataSource;*/
+
+- (instancetype)initWithOpenTokApiKey:(NSString *)apiKey
+                              sessionId:(NSString *)sessionId
+                                  token:(NSString *)token
+                                   name:(NSString *)name;
+
+- (void)connectWithHandler:(OTWrapperBlock)handler; //to receive notifications changes
+
+- (void)disconnect; // Force un-publish/un-subscribe, disconnect from session and clean everything
 
 - (NSError *)broadcastSignalWithType:(NSString *)type;
 
 - (NSError *)broadcastSignalWithType:(NSString *)type
                                 data:(id)string;
-
-- (void) connect;
-
-- (void)connectWithHandler:(OTWrapperBlock)handler; //to receive notifications changes
-
-- (void)disconnect; // Force un-publish/un-subscribe, disconnect from session and clean everything
 
 #pragma mark - connection
 @property (readonly, nonatomic) NSString *selfConnectionId;
@@ -117,7 +120,7 @@ typedef enum : NSUInteger {
     participantWithStreamId: (NSString *) streamId
                     enabled:(BOOL)enabled;
 
-- (BOOL) isReceivedMedia:(OTSDKWrapperMediaType)mediaType;
+- (BOOL)isReceivedMedia:(OTSDKWrapperMediaType)mediaType;
 
 - (void)switchRemoteVideoViewScaleWithStreamId:(NSString *)streamId;
 

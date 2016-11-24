@@ -272,7 +272,6 @@ public class OTWrapper {
    * @param screensharing Whether to indicate the camera or the screen streaming
    */
   public void stopPublishingMedia(Boolean screensharing) {
-    if (mSession != null) {
       if (!screensharing) {
         if (mPublisher != null && startPublishing) {
           mSession.unpublish(mPublisher);
@@ -293,7 +292,6 @@ public class OTWrapper {
 
         mScreenPublisher = null;
       }
-    }
   }
 
 
@@ -374,7 +372,6 @@ public class OTWrapper {
 
   public void addRemote(String remoteId) {
     Log.i(LOG_TAG, "Add remote with ID: " + remoteId);
-    if (mStreams.containsKey(remoteId) && mSession != null) {
       Stream stream = mStreams.get(remoteId);
       Log.i(LOG_TAG, "private add new remote stream != null");
       Subscriber sub = new Subscriber(mContext, stream);
@@ -400,15 +397,14 @@ public class OTWrapper {
       }
 
       mSession.subscribe(sub);
-    }
   }
 
   public void removeRemote(String remoteId) {
     Log.i(LOG_TAG, "Remove remote with ID: "+remoteId);
-    if (mSubscribers.containsKey(remoteId) && mSession != null ) {
       Subscriber sub = mSubscribers.get(remoteId);
+      mSubscribers.remove(sub);
+      mStreams.put(remoteId, sub.getStream());
       mSession.unsubscribe(sub);
-    }
   }
 
   /**
@@ -991,9 +987,9 @@ public class OTWrapper {
     public void onStreamReceived(Session session, Stream stream) {
       Log.d(LOG_TAG, "OnStreamReceived: " + stream.getConnection().getData());
 
-      if ( mStreams != null )
+      if ( mStreams != null ) {
         mStreams.put(stream.getStreamId(), stream);
-
+      }
       if (mOTConfig.shouldSubscribeAutomatically()) {
         addRemote(stream.getStreamId());
       }
@@ -1010,11 +1006,12 @@ public class OTWrapper {
       Log.d(LOG_TAG, "OnStreamDropped: " + stream.getConnection().getData());
 
       String subId = stream.getStreamId();
-      if ( mStreams.containsKey(subId) )
+      if ( mStreams.containsKey(subId) ) {
         mStreams.remove(stream.getStreamId());
-      if ( mSubscribers.containsKey(subId) )
+      }
+      if ( mSubscribers.containsKey(subId) ) {
         mSubscribers.remove(stream.getStreamId());
-
+      }
       if (mBasicListeners != null) {
         for (BasicListener listener : mBasicListeners) {
           ((RetriableBasicListener)listener).onRemoteLeft(SELF, subId);
@@ -1171,7 +1168,6 @@ public class OTWrapper {
 
     @Override
     public void onStreamDestroyed(PublisherKit publisherKit, Stream stream) {
-      Log.i(LOG_TAG, "ONSTREAM DESTROYED");
       boolean screensharing = false;
       if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen){
         screensharing = true;

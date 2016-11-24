@@ -59,6 +59,7 @@ public class OTWrapper {
   //indexed by streamId, *not* per subscriber Id
   private HashMap<String, Subscriber> mSubscribers = null;
   private Hashtable<String, Connection> mConnections = null;
+  private Hashtable<String, Stream> mStreams = null;
 
   //listeners
   private Hashtable<String, ArrayList<SignalListener>> mSignalListeners = null;
@@ -100,6 +101,7 @@ public class OTWrapper {
     this.mOTConfig = config;
     mSubscribers = new HashMap<String, Subscriber>();
     mConnections = new Hashtable<String, Connection>();
+    mStreams = new Hashtable<String, Stream>();
     mSignalListeners = new Hashtable<String, ArrayList<SignalListener>>();
     mBasicListeners = new ArrayList<RetriableBasicListener<OTWrapper>>();
     mAdvancedListeners = new ArrayList<RetriableAdvancedListener<OTWrapper>>();
@@ -357,6 +359,16 @@ public class OTWrapper {
       }
     }
     return returnedValue;
+  }
+
+  public void addRemote(String remoteId) {
+    Log.i(LOG_TAG, "Add remote with ID: "+remoteId);
+    addNewRemote(mStreams.get(remoteId));
+  }
+
+  public void removeRemote(String remoteId) {
+    Log.i(LOG_TAG, "Remove remote with ID: "+remoteId);
+    removeRemote(mStreams.get(remoteId));
   }
 
   /**
@@ -635,6 +647,7 @@ public class OTWrapper {
     mPublisher = null;
     mSubscribers = null;
     mConnections = null;
+    mStreams = null;
     mConnectionsCount = 0;
     mSessionConnection = null;
     isPreviewing = false;
@@ -822,29 +835,33 @@ public class OTWrapper {
   }
 
   private void addNewRemote(Stream stream){
-    if (mOTConfig.shouldSubscribeAutomatically()) {
-      Subscriber sub = new Subscriber(mContext, stream);
-      sub.setVideoListener(mVideoListener);
-      sub.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-      String subId = stream.getStreamId();
-      mSubscribers.put(subId, sub);
-      sub.setSubscriberListener(mSubscriberListener);
-      if (mBasicListeners != null) {
-        for (BasicListener listener : mBasicListeners) {
-          ((RetriableBasicListener) listener).onRemoteJoined(SELF, subId);
+      if ( stream != null ) {
+        Log.i(LOG_TAG, "private add new remote stream != null");
+        Subscriber sub = new Subscriber(mContext, stream);
+        sub.setVideoListener(mVideoListener);
+        sub.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+        String subId = stream.getStreamId();
+        mSubscribers.put(subId, sub);
+        sub.setSubscriberListener(mSubscriberListener);
+
+        if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeCamera &&
+                mVideoRemoteRenderer != null) {
+          sub.setRenderer(mVideoRemoteRenderer);
+        } else {
+          if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen &&
+                  mScreenRemoteRenderer != null) {
+            sub.setRenderer(mScreenRemoteRenderer);
+          }
         }
+        mSession.subscribe(sub);
       }
-      if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeCamera &&
-              mVideoRemoteRenderer != null) {
-        sub.setRenderer(mVideoRemoteRenderer);
-      } else {
-        if (stream.getStreamVideoType() == Stream.StreamVideoType.StreamVideoTypeScreen &&
-                mScreenRemoteRenderer != null) {
-          sub.setRenderer(mScreenRemoteRenderer);
-        }
+  }
+
+  private void removeRemote(Stream stream){
+      if ( stream != null && mSubscribers.containsKey(stream.getStreamId()) ){
+        Subscriber sub = mSubscribers.get(stream.getStreamId());
+        mSession.unsubscribe(sub);
       }
-      mSession.subscribe(sub);
-    }
   }
 
   //Signal protocol
@@ -959,7 +976,17 @@ public class OTWrapper {
     @Override
     public void onStreamReceived(Session session, Stream stream) {
       Log.d(LOG_TAG, "OnStreamReceived: " + stream.getConnection().getData());
-      addNewRemote(stream);
+      if (mOTConfig.shouldSubscribeAutomatically()) {
+        addNewRemote(stream);
+      }
+
+      mStreams.put(stream.getStreamId(), stream);
+
+      if (mBasicListeners != null) {
+        for (BasicListener listener : mBasicListeners) {
+          ((RetriableBasicListener) listener).onRemoteJoined(SELF, stream.getStreamId());
+        }
+      }
     }
 
     @Override
@@ -967,7 +994,9 @@ public class OTWrapper {
       Log.d(LOG_TAG, "OnStreamDropped: " + stream.getConnection().getData());
 
       String subId = stream.getStreamId();
-      mSubscribers.remove(subId);
+      mStreams.remove(stream.getStreamId());
+      mSubscribers.remove(stream.getStreamId());
+
       if (mBasicListeners != null) {
         for (BasicListener listener : mBasicListeners) {
           ((RetriableBasicListener)listener).onRemoteLeft(SELF, subId);
@@ -1027,6 +1056,7 @@ public class OTWrapper {
     new SubscriberKit.SubscriberListener() {
       @Override
       public void onConnected(SubscriberKit sub) {
+        Log.i(LOG_TAG, "SUBSCRIBER IS CONNECTED");
         if (mBasicListeners != null) {
           for (BasicListener listener : mBasicListeners) {
             Stream stream = sub.getStream();
@@ -1038,7 +1068,13 @@ public class OTWrapper {
       }
 
       @Override
-      public void onDisconnected(SubscriberKit subscriberKit) {
+      public void onDisconnected(SubscriberKit sub) {
+        if (mBasicListeners != null) {
+          for (BasicListener listener : mBasicListeners) {
+            ((RetriableBasicListener) listener).
+                    onRemoteViewDestroyed(SELF, null, sub.getStream().getStreamId());
+          }
+        }
       }
 
       @Override

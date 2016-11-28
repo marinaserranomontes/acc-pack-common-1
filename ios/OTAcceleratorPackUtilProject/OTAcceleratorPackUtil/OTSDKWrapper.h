@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 #import <OTAcceleratorPackUtil/OTAcceleratorSession.h>
-#import <OTAcceleratorPackUtil/OTStreamStatus.h>
+//#import <OTAcceleratorPackUtil/OTStreamStatus.h>
 
 typedef enum: NSUInteger {
     OTWrapperDidConnect = 0,
@@ -41,7 +41,7 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 @class OTSDKWrapper;
 @protocol OTSDKWrapperDataSource <NSObject>
 
-- (OTSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper;
+- (OTAcceleratorSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper;
 
 @end
 
@@ -103,7 +103,7 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 
 - (void)switchVideoViewScaleBehavior;
 
-- (OTStreamStatus *) getLocalStreamStatus;
+//- (OTStreamStatus *) getLocalStreamStatus;
 
 #pragma mark - subscirbers
 
@@ -121,6 +121,8 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 
 - (void)switchRemoteVideoViewScaleBehaviorWithStreamId:(NSString *)streamId;
 
-- (OTStreamStatus *) getRemoteStreamStatusWithStreamId:(NSString *) streamId;
+//- (OTStreamStatus *) getRemoteStreamStatusWithStreamId:(NSString *) streamId;
+
+-(NSString *) stringWithOTWrapperSignal: (NSUInteger) input;
 
 @end

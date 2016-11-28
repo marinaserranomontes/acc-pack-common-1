@@ -102,8 +102,7 @@
 
 - (void)endCallButtonPressed {
     [self.wrapper disconnect];
-    //[self.wrapper stopPublishingLocalMedia];
- }
+}
 
 #pragma mark - OTOneToOneCommunicatorDataSource
 - (OTAcceleratorSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper {

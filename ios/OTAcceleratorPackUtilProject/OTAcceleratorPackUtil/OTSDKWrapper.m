@@ -231,11 +231,36 @@
 }
 
 - (void)switchCamera {
-    //TODO
+    if ( _publisher ) {
+        AVCaptureDevicePosition newCameraPosition;
+        AVCaptureDevicePosition currentCameraPosition;
+        
+        //get current position
+        currentCameraPosition = _publisher.cameraPosition;
+        //set the new position
+        if( currentCameraPosition == AVCaptureDevicePositionFront ){
+            newCameraPosition = AVCaptureDevicePositionBack;
+        } else {
+            newCameraPosition = AVCaptureDevicePositionFront;
+        }
+        
+        [_publisher setCameraPosition:newCameraPosition];
+        
+        if ( self.handler ){
+            self.handler(OTCameraChanged, _publisher.stream.streamId, nil);
+        }
+    }
 }
 
 - (void)switchVideoViewScaleBehavior {
-    //TODO
+    if ( _publisher ) {
+        if ( _publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFit ){
+            _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFill;
+        }
+        else if ( _publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFill ){
+            _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFit;
+        }
+    }
 }
 
 - (UIView *)addRemoteWithStreamId:(NSString *)streamId
@@ -294,27 +319,38 @@
                 subscriber.subscribeToVideo = enabled;
             }
         }
+        [_subscribers setObject:subscriber forKey:streamId];
     }
 }
 
 - (BOOL)isReceivedMediaEnabledWithStreamId:(NSString *)streamId
                                      media:(OTSDKWrapperMediaType)mediaType {
     OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
-    
-    if ( mediaType == OTSDKWrapperMediaTypeAudio ){
-        return subscriber.subscribeToAudio;
-    }
-    else {
-        if ( mediaType == OTSDKWrapperMediaTypeVideo ){
-            return subscriber.subscribeToVideo;
+    if ( subscriber ){
+        if ( mediaType == OTSDKWrapperMediaTypeAudio ){
+            return subscriber.subscribeToAudio;
         }
+        else {
+            if ( mediaType == OTSDKWrapperMediaTypeVideo ){
+                return subscriber.subscribeToVideo;
+            }
+        }
+        [_subscribers setObject:subscriber forKey:streamId];
     }
-    
     return false;
 }
 
 - (void)switchRemoteVideoViewScaleBehaviorWithStreamId:(NSString *)streamId {
-    //TODO
+    OTSubscriber *sub = [_subscribers valueForKey:streamId];
+    if ( !sub ) {
+        if ( sub.viewScaleBehavior == OTVideoViewScaleBehaviorFit ){
+            sub.viewScaleBehavior = OTVideoViewScaleBehaviorFill;
+        }
+        else if ( sub.viewScaleBehavior == OTVideoViewScaleBehaviorFill ){
+            sub.viewScaleBehavior = OTVideoViewScaleBehaviorFit;
+        }
+        [_subscribers setObject:sub forKey:streamId];
+    }
 }
 
 #pragma mark - Private Methods

@@ -7,23 +7,6 @@
 
 #import "OTSDKWrapper.h"
 
-@interface OTSDKWrapper() <OTSessionDelegate, OTPublisherDelegate, OTSubscriberKitDelegate, OTSubscriberKitDelegate>
-
-@property (nonatomic) NSString *name;
-@property (weak, nonatomic) OTAcceleratorSession *session;
-@property (nonatomic) OTPublisher *publisher; //for this first version, we will only have 1 pub.
-@property (nonatomic) NSMutableDictionary *subscribers;
-@property (nonatomic) NSMutableDictionary *streams;
-@property (nonatomic) NSMutableDictionary *connections;
-
-@property (nonatomic) NSUInteger internalConnectionCount;
-@property (nonatomic) OTConnection * selfConnection;
-@property (readonly, nonatomic) NSUInteger connectionsOlderThanMe;
-
-@property (strong, nonatomic) OTWrapperBlock handler;
-
-@end
-
 @implementation OTSDKWrapper
 
 #pragma mark - session

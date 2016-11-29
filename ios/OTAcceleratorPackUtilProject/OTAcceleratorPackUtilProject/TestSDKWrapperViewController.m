@@ -9,7 +9,7 @@
 #import "TestSDKWrapperViewController.h"
 #import "AppDelegate.h"
 
-@interface TestSDKWrapperViewController () <OTSDKWrapperDataSource>
+@interface TestSDKWrapperViewController () <OTSDKWrapperDataSource, OTWrapperSignalDelegate>
 
 @property (weak, nonatomic) IBOutlet UIView *subscriberView;
 @property (weak, nonatomic) IBOutlet UIView *publisherView;
@@ -23,7 +23,8 @@
     [super viewDidLoad];
     
     self.wrapper = [[OTSDKWrapper alloc] initWithDataSource:self];
-    
+    self.wrapper.delegate = self;
+
     [self.wrapper connectWithHandler:^(OTWrapperSignal signal, NSString *streamId, NSError *error) {
         if (!error) {
             [self handleCommunicationWithSignal:signal streamId: streamId];
@@ -35,7 +36,6 @@
     
     UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"EndCall" style:UIBarButtonItemStylePlain target:self action:@selector(endCallButtonPressed)];
     self.navigationItem.rightBarButtonItem = rightBarButtonItem;
-
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -46,15 +46,13 @@
 - (void)handleCommunicationWithSignal:(OTWrapperSignal)signal
                          streamId: (NSString *) streamId{
     
-        NSLog(@"OTWrapperSignal: %@", [self.wrapper stringWithOTWrapperSignal: signal]);
-    
-        switch (signal) {
+    switch (signal) {
         case OTWrapperDidConnect: {
             NSLog(@"SDKWrapper connected");
             
             //start publishing
             UIView * pubView = [self.wrapper startPublishingLocalMedia];
-            
+       
             if (pubView != nil){
                 pubView.frame = self.publisherView.bounds;
                 [self.publisherView addSubview:pubView];
@@ -102,6 +100,12 @@
 
 - (void)endCallButtonPressed {
     [self.wrapper disconnect];
+}
+
+- (void)signalReceivedWithType:(NSString *) type
+                          data: (NSString *) data
+              fromConnectionId: (NSString *) connectionId{
+    NSLog(@"New received signal with type %@", type);
 }
 
 #pragma mark - OTOneToOneCommunicatorDataSource

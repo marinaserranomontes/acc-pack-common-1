@@ -2,7 +2,6 @@
 //  OTStreamStatus.h
 //  OTAcceleratorPackUtilProject
 //
-//  Created by mserrano on 23/11/2016.
 //  Copyright © 2016 Tokbox, Inc. All rights reserved.
 //
 

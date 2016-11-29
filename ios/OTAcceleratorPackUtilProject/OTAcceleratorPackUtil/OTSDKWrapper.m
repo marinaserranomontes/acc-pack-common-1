@@ -2,7 +2,6 @@
 //  OTSDKWrapper.m
 //  OTAcceleratorPackUtilProject
 //
-//  Created by Xi Huang on 11/14/16.
 //  Copyright © 2016 Tokbox, Inc. All rights reserved.
 //
 
@@ -55,17 +54,39 @@
 
 - (NSError *)broadcastSignalWithType:(NSString *)type {
     NSError *error;
-    
-    //TODO
+    if ( _session ){
+        [_session signalWithType:type
+                              string:nil
+                          connection:nil //to send to all the participants
+                               error:&error];
+    }
     
     return error;
 }
 
 - (NSError *)broadcastSignalWithType:(NSString *)type
-                                data:(id)string {
+                                    data:(id)string {
     NSError *error;
+    if ( _session ){
+        [_session signalWithType:type
+                          string:string
+                      connection:nil //to send to all the participants
+                           error:&error];
+    }
     
-    //TODO
+    return error;
+}
+
+- (NSError *)broadcastSignalWithType:(NSString *)type
+                                data:(id)string
+                                 dst: (NSString *)connectionId{
+    NSError *error;
+    if ( _session ){
+        [_session signalWithType:type
+                          string:string
+                        connection: [_connections valueForKey:connectionId] //to send to a specific participant
+                           error:&error];
+    }
     
     return error;
 }
@@ -163,7 +184,11 @@
     
     UIView *view;
     
-    //TODO
+    if (!self.publisher){
+        //create a new publisher
+        self.publisher = [[OTPublisher alloc] initWithDelegate:self name:self.name];
+        view = self.publisher.view;
+    }
     
     return view;
 }
@@ -176,15 +201,15 @@
     if (!self.publisher){
         //create a new publisher
         self.publisher = [[OTPublisher alloc] initWithDelegate:self name:self.name];
-        
-        //start publishing
-        [self.session publish:self.publisher error:&error];
-        view = self.publisher.view;
-     
-        if (error) {
-            self.handler(OTWrapperDidFail, nil, error);
-        }
     }
+    //start publishing
+    [self.session publish:self.publisher error:&error];
+    view = self.publisher.view;
+    
+    if (error) {
+        self.handler(OTWrapperDidFail, nil, error);
+    }
+    
     return view;
 }
 
@@ -353,6 +378,20 @@
     }
 }
 
+- (OTStreamStatus *) getRemoteStreamStatusWithStreamId:(NSString *) streamId {
+    
+    OTSubscriber *sub = [_subscribers valueForKey:streamId];
+    if ( sub ) {
+        return [[OTStreamStatus alloc] initWithStreamView: sub.view containerAudo:sub.subscribeToAudio containerVideo:sub.subscribeToVideo hasAudio:sub.stream.hasAudio hasVideo:sub.stream.hasVideo type:sub.stream.videoType size:sub.stream.videoDimensions];
+    }
+    
+    return nil;
+}
+
+- (OTStreamStatus *) getLocalStreamStatus {
+    return [[OTStreamStatus alloc] initWithStreamView:_publisher.view containerAudo:_publisher.publishAudio containerVideo:_publisher.publishVideo hasAudio:_publisher.stream.hasAudio hasVideo:_publisher.stream.hasVideo type:_publisher.stream.videoType size:_publisher.stream.videoDimensions];
+}
+
 #pragma mark - Private Methods
 -(void) compareConnectionTimeWithConnection: (OTConnection *)connection {
     NSComparisonResult result = [connection.creationTime compare:_selfConnection.creationTime];
@@ -445,6 +484,16 @@ connectionDestroyed:(OTConnection*) connection {
 - (void)sessionDidReconnect:(OTSession *)session {
     if ( self.handler ){
         self.handler(OTWrapperDidReconnect, nil, nil);
+    }
+}
+
+- (void)session:(OTSession*)session
+receivedSignalType:(NSString*)type
+ fromConnection:(OTConnection*)connection
+     withString:(NSString*)string {
+    
+    if (self.delegate) {
+        [self.delegate signalReceivedWithType:type data:string fromConnectionId:connection.connectionId];
     }
 }
 
@@ -542,31 +591,4 @@ connectionDestroyed:(OTConnection*) connection {
         self.handler(OTWrapperDidFail, subscriber.stream.streamId, error);
     }
 }
-
--(NSString *) stringWithOTWrapperSignal: (NSUInteger) input {
-    NSArray *arr = @[
-                     @"OTWrapperDidConnect",
-                     @"OTWrapperDidDisconnect",
-                     @"OTWrapperDidFail",
-                     @"OTWrapperDidStartPublishing",
-                     @"OTWrapperDidStopPublishing",
-                     @"OTWrapperDidStartCaptureMedia",
-                     @"OTWrapperDidStopCaptureMedia",
-                     @"OTWrapperDidJoinRemote",
-                     @"OTWrapperDidLeaveRemote",
-                     @"OTReceivedVideoDisabledByLocal",
-                     @"OTReceivedVideoEnabledByLocal",
-                     @"OTRemoteVideoDisabledByRemote",
-                     @"OTRemoteVideoEnabledByRemote",
-                     @"OTRemoteVideoDisabledByBadQuality",
-                     @"OTRemoteVideoEnabledByGoodQuality",
-                     @"OTRemoteVideoDisableWarning",
-                     @"OTRemoteVideoDisableWarningLifted",
-                     @"OTCameraChanged",
-                     @"OTWrapperDidBeginReconnecting",
-                     @"OTWrapperDidReconnect"
-                     ];
-    return (NSString *)[arr objectAtIndex:input];
-}
-
 @end

@@ -6,4 +6,6 @@
 
 #import <OTAcceleratorPackUtil/OTAcceleratorSession.h>
 #import <OTAcceleratorPackUtil/OTSDKWrapper.h>
+#import <OTAcceleratorPackUtil/OTStreamStatus.h>
 #import <OTAcceleratorPackUtil/OTOneToOneCommunicator.h>
+

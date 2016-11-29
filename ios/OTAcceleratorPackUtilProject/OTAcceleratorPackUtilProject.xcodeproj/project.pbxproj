@@ -32,7 +32,7 @@
 		A0FEABFF1D73B3BF000BDDA4 /* CHANGELOG.md in Sources */ = {isa = PBXBuildFile; fileRef = A0FEABFC1D73B3BF000BDDA4 /* CHANGELOG.md */; };
 		A0FEAC001D73B3BF000BDDA4 /* OTAcceleratorPackUtil.podspec in Resources */ = {isa = PBXBuildFile; fileRef = A0FEABFD1D73B3BF000BDDA4 /* OTAcceleratorPackUtil.podspec */; };
 		A0FEAC011D73B3BF000BDDA4 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = A0FEABFE1D73B3BF000BDDA4 /* Podfile */; };
-		F499B8791DE712F900C16BAB /* OTStreamStatus.h in Headers */ = {isa = PBXBuildFile; fileRef = F499B8771DE712F900C16BAB /* OTStreamStatus.h */; };
+		F499B8791DE712F900C16BAB /* OTStreamStatus.h in Headers */ = {isa = PBXBuildFile; fileRef = F499B8771DE712F900C16BAB /* OTStreamStatus.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F499B87A1DE712F900C16BAB /* OTStreamStatus.m in Sources */ = {isa = PBXBuildFile; fileRef = F499B8781DE712F900C16BAB /* OTStreamStatus.m */; };
 		F499B87D1DE8342800C16BAB /* TestSDKWrapperViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F499B87C1DE8342800C16BAB /* TestSDKWrapperViewController.m */; };
 /* End PBXBuildFile section */

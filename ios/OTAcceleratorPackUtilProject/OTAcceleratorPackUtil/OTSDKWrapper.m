@@ -54,12 +54,7 @@
 
 - (NSError *)broadcastSignalWithType:(NSString *)type {
     NSError *error;
-    if ( _session ){
-        [_session signalWithType:type
-                              string:nil
-                          connection:nil //to send to all the participants
-                               error:&error];
-    }
+    error = [self broadcastSignalWithType:type data:nil dst:nil];
     
     return error;
 }
@@ -67,13 +62,8 @@
 - (NSError *)broadcastSignalWithType:(NSString *)type
                                     data:(id)string {
     NSError *error;
-    if ( _session ){
-        [_session signalWithType:type
-                          string:string
-                      connection:nil //to send to all the participants
-                           error:&error];
-    }
-    
+    error = [self broadcastSignalWithType:type data:string dst:nil];
+   
     return error;
 }
 
@@ -81,7 +71,7 @@
                                 data:(id)string
                                  dst: (NSString *)connectionId{
     NSError *error;
-    if ( _session ){
+    if (_session) {
         [_session signalWithType:type
                           string:string
                         connection: [_connections valueForKey:connectionId] //to send to a specific participant
@@ -126,7 +116,7 @@
     
     //force unsubscriber
     if ([_subscribers count] != 0) {
-        for(NSString* key in _subscribers) {
+        for (NSString* key in _subscribers) {
             OTSubscriber *sub = [_subscribers valueForKey:key];
             [sub.view removeFromSuperview];
             [_session unsubscribe:sub error:&error];
@@ -165,7 +155,7 @@
 }
 
 - (BOOL)isFirstConnection {
-    if ( _connectionsOlderThanMe > 0 ) return false;
+    if (_connectionsOlderThanMe > 0) return false;
     else {
         return true;
     }
@@ -173,18 +163,15 @@
 
 - (NSTimeInterval)intervalWithConnectionId:(NSString *)connectionId {
     OTConnection * connection = [_connections valueForKey:connectionId];
-    //TODO
-    
-    NSTimeInterval time;
+    NSTimeInterval time = [self.selfConnection.creationTime timeIntervalSinceDate: connection.creationTime];
     
     return time;
 }
 
 - (UIView *)captureLocalMedia {
-    
     UIView *view;
     
-    if (!self.publisher){
+    if (!self.publisher) {
         //create a new publisher
         self.publisher = [[OTPublisher alloc] initWithDelegate:self name:self.name];
         view = self.publisher.view;
@@ -194,18 +181,12 @@
 }
 
 - (UIView *)startPublishingLocalMedia {
-    
     OTError *error = nil;
     UIView *view = nil;
     
-    if (!self.publisher){
-        //create a new publisher
-        self.publisher = [[OTPublisher alloc] initWithDelegate:self name:self.name];
-    }
+    view = [self captureLocalMedia];
     //start publishing
     [self.session publish:self.publisher error:&error];
-    view = self.publisher.view;
-    
     if (error) {
         self.handler(OTWrapperDidFail, nil, error);
     }
@@ -215,7 +196,7 @@
 
 - (NSError *)stopPublishingLocalMedia {
     OTError *error = nil;
-    if ( self.publisher ) {
+    if (self.publisher) {
         //we suppose we have only a publisher, what happens when we have the screensharing pub too? boolean to indicate it?
         [self.publisher.view removeFromSuperview];
         [self.session unpublish:self.publisher error:&error];
@@ -224,17 +205,18 @@
             self.handler(OTWrapperDidFail, nil, error);
         }
     }
+    
     return error;
 }
 
 - (void)enableLocalMedia:(OTSDKWrapperMediaType)mediaType
                  enabled:(BOOL)enabled {
-    if ( _publisher ){
-        if ( mediaType == OTSDKWrapperMediaTypeAudio ){
+    if (_publisher) {
+        if (mediaType == OTSDKWrapperMediaTypeAudio) {
             _publisher.publishAudio = enabled;
         }
         else {
-            if ( mediaType == OTSDKWrapperMediaTypeVideo ){
+            if (mediaType == OTSDKWrapperMediaTypeVideo){
                 _publisher.publishVideo = enabled;
             }
         }
@@ -242,28 +224,29 @@
 }
 
 - (BOOL)isLocalMediaEnabled:(OTSDKWrapperMediaType)mediaType {
-    if ( _publisher ) {
-        if ( mediaType == OTSDKWrapperMediaTypeAudio ){
+    if (_publisher) {
+        if (mediaType == OTSDKWrapperMediaTypeAudio) {
             return _publisher.publishAudio;
         }
         else {
-            if ( mediaType == OTSDKWrapperMediaTypeVideo ){
+            if (mediaType == OTSDKWrapperMediaTypeVideo) {
                 return _publisher.publishVideo;
             }
         }
     }
+    
     return false;
 }
 
 - (void)switchCamera {
-    if ( _publisher ) {
+    if (_publisher) {
         AVCaptureDevicePosition newCameraPosition;
         AVCaptureDevicePosition currentCameraPosition;
         
         //get current position
         currentCameraPosition = _publisher.cameraPosition;
         //set the new position
-        if( currentCameraPosition == AVCaptureDevicePositionFront ){
+        if (currentCameraPosition == AVCaptureDevicePositionFront) {
             newCameraPosition = AVCaptureDevicePositionBack;
         } else {
             newCameraPosition = AVCaptureDevicePositionFront;
@@ -271,18 +254,18 @@
         
         [_publisher setCameraPosition:newCameraPosition];
         
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTCameraChanged, _publisher.stream.streamId, nil);
         }
     }
 }
 
 - (void)switchVideoViewScaleBehavior {
-    if ( _publisher ) {
-        if ( _publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFit ){
+    if (_publisher) {
+        if (_publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFit) {
             _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFill;
         }
-        else if ( _publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFill ){
+        else if (_publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFill) {
             _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFit;
         }
     }
@@ -293,15 +276,14 @@
     UIView *view = nil;
     
     //check if the remote exists
-    if ( !_subscribers[streamId] ){
+    if (!_subscribers[streamId]) {
         NSError *subscriberError = nil;
-        
         OTStream * stream = [_streams valueForKey:streamId];
         
         OTSubscriber *subscriber = [[OTSubscriber alloc] initWithStream:stream delegate:self];
         [_session subscribe:subscriber error:&subscriberError];
         
-        if (subscriberError){
+        if (subscriberError) {
             self.handler(OTWrapperDidFail, nil, subscriberError);
         }
         [_subscribers setObject:subscriber forKey:streamId];
@@ -313,10 +295,8 @@
 
 - (NSError *)removeRemoteWithStreamId:(NSString *)streamId {
     NSError *unsubscribeError = nil;
-    if ( _subscribers[streamId] ){
-        
+    if (_subscribers[streamId]) {
         OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
-        
         [subscriber.view removeFromSuperview];
         
         [self.session unsubscribe:subscriber error:&unsubscribeError];
@@ -335,12 +315,12 @@
                                   media:(OTSDKWrapperMediaType)mediaType
                                 enabled:(BOOL)enabled {
     OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
-    if ( subscriber ){
-        if ( mediaType == OTSDKWrapperMediaTypeAudio ){
+    if (subscriber) {
+        if (mediaType == OTSDKWrapperMediaTypeAudio) {
             subscriber.subscribeToAudio = enabled;
         }
         else {
-            if ( mediaType == OTSDKWrapperMediaTypeVideo ){
+            if (mediaType == OTSDKWrapperMediaTypeVideo) {
                 subscriber.subscribeToVideo = enabled;
             }
         }
@@ -351,27 +331,28 @@
 - (BOOL)isReceivedMediaEnabledWithStreamId:(NSString *)streamId
                                      media:(OTSDKWrapperMediaType)mediaType {
     OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
-    if ( subscriber ){
-        if ( mediaType == OTSDKWrapperMediaTypeAudio ){
+    if (subscriber) {
+        if (mediaType == OTSDKWrapperMediaTypeAudio) {
             return subscriber.subscribeToAudio;
         }
         else {
-            if ( mediaType == OTSDKWrapperMediaTypeVideo ){
+            if (mediaType == OTSDKWrapperMediaTypeVideo) {
                 return subscriber.subscribeToVideo;
             }
         }
         [_subscribers setObject:subscriber forKey:streamId];
     }
+    
     return false;
 }
 
 - (void)switchRemoteVideoViewScaleBehaviorWithStreamId:(NSString *)streamId {
     OTSubscriber *sub = [_subscribers valueForKey:streamId];
-    if ( !sub ) {
-        if ( sub.viewScaleBehavior == OTVideoViewScaleBehaviorFit ){
+    if (!sub) {
+        if (sub.viewScaleBehavior == OTVideoViewScaleBehaviorFit){
             sub.viewScaleBehavior = OTVideoViewScaleBehaviorFill;
         }
-        else if ( sub.viewScaleBehavior == OTVideoViewScaleBehaviorFill ){
+        else if (sub.viewScaleBehavior == OTVideoViewScaleBehaviorFill) {
             sub.viewScaleBehavior = OTVideoViewScaleBehaviorFit;
         }
         [_subscribers setObject:sub forKey:streamId];
@@ -381,7 +362,7 @@
 - (OTStreamStatus *) getRemoteStreamStatusWithStreamId:(NSString *) streamId {
     
     OTSubscriber *sub = [_subscribers valueForKey:streamId];
-    if ( sub ) {
+    if (sub) {
         return [[OTStreamStatus alloc] initWithStreamView: sub.view containerAudo:sub.subscribeToAudio containerVideo:sub.subscribeToVideo hasAudio:sub.stream.hasAudio hasVideo:sub.stream.hasVideo type:sub.stream.videoType size:sub.stream.videoDimensions];
     }
     
@@ -396,11 +377,11 @@
 -(void) compareConnectionTimeWithConnection: (OTConnection *)connection {
     NSComparisonResult result = [connection.creationTime compare:_selfConnection.creationTime];
     
-    if(result==NSOrderedAscending){
+    if (result==NSOrderedAscending) {
         _connectionsOlderThanMe --;
     }
     else {
-        if(result==NSOrderedDescending){
+        if (result==NSOrderedDescending) {
             _connectionsOlderThanMe ++;
         }
         else
@@ -410,14 +391,14 @@
 
 #pragma mark - OTSessionDelegate
 -(void)sessionDidConnect:(OTSession*)session {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidConnect, nil, nil);
     }
     _selfConnection = session.connection;
 }
 
 - (void)sessionDidDisconnect:(OTSession *)session {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidDisconnect, nil, nil);
     }
 }
@@ -444,23 +425,21 @@ connectionDestroyed:(OTConnection*) connection {
 }
 
 - (void)session:(OTSession *)session streamCreated:(OTStream *)stream {
-    if( !_streams[stream.streamId]){
+    if (stream.streamId && !_streams[stream.streamId]) {
         [_streams setObject:stream forKey:stream.streamId];
     }
     
-    if (self.handler){
+    if (self.handler) {
         self.handler(OTWrapperDidJoinRemote, stream.streamId, nil);
     }
-    
-    //TODO SUBSCRIBE AUTOMATICALLY
 }
 
 - (void)session:(OTSession *)session streamDestroyed:(OTStream *)stream {
-    if( _streams[stream.streamId]){
+    if (stream.streamId && !_streams[stream.streamId]) {
         [_streams removeObjectForKey:stream.streamId];
     }
     
-    if (_subscribers[stream.streamId]){
+    if (_subscribers[stream.streamId]) {
         [_subscribers removeObjectForKey:stream.streamId];
         //remote left the session
         if (self.handler){
@@ -470,19 +449,19 @@ connectionDestroyed:(OTConnection*) connection {
 }
 
 - (void)session:(OTSession *)session didFailWithError:(OTError *)error {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidFail, nil, error);
     }
 }
 
 - (void)sessionDidBeginReconnecting:(OTSession *)session {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidBeginReconnecting, nil,  nil);
     }
 }
 
 - (void)sessionDidReconnect:(OTSession *)session {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidReconnect, nil, nil);
     }
 }
@@ -499,19 +478,19 @@ receivedSignalType:(NSString*)type
 
 #pragma mark - OTPublisherDelegate
 - (void)publisher:(OTPublisherKit *)publisher didFailWithError:(OTError *)error {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidFail, publisher.stream.streamId, error);
     }
 }
 
 - (void)publisher:(OTPublisherKit*)publisher streamCreated:(OTStream*)stream {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidStartPublishing, publisher.stream.streamId, nil);
     }
 }
 
 - (void)publisher:(OTPublisherKit*)publisher streamDestroyed:(OTStream*)stream {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidStopPublishing, publisher.stream.streamId, nil);
     }
     self.publisher = nil; //cleanup publisher
@@ -519,28 +498,27 @@ receivedSignalType:(NSString*)type
 
 #pragma mark - OTSubscriberKitDelegate
 -(void) subscriberDidConnectToStream:(OTSubscriberKit*)subscriber {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidJoinRemote, subscriber.stream.streamId, nil);
     }
 }
 
 -(void)subscriberVideoDisabled:(OTSubscriber *)subscriber reason:(OTSubscriberVideoEventReason)reason {
-    
     if (![_subscribers valueForKey:subscriber.stream.streamId]){
         return;
     }
     
     if (reason == OTSubscriberVideoEventPublisherPropertyChanged) {
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTRemoteVideoDisabledByRemote, subscriber.stream.streamId, nil);
         }
     }
     else if (reason == OTSubscriberVideoEventQualityChanged) {
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTRemoteVideoDisabledByBadQuality, subscriber.stream.streamId, nil);
         }
     } else if (reason == OTSubscriberVideoEventSubscriberPropertyChanged) {
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTReceivedVideoDisabledByLocal, subscriber.stream.streamId, nil);
         }
     }
@@ -548,21 +526,21 @@ receivedSignalType:(NSString*)type
 
 - (void)subscriberVideoEnabled:(OTSubscriberKit *)subscriber reason:(OTSubscriberVideoEventReason)reason {
     
-    if (![_subscribers valueForKey:subscriber.stream.streamId]){
+    if (![_subscribers valueForKey:subscriber.stream.streamId]) {
         return;
     }
     
     if (reason == OTSubscriberVideoEventPublisherPropertyChanged) {
-        if ( self.handler ){
+        if (self.handler){
             self.handler(OTRemoteVideoEnabledByRemote, subscriber.stream.streamId, nil);
         }
     }
     else if (reason == OTSubscriberVideoEventQualityChanged) {
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTRemoteVideoEnabledByGoodQuality, subscriber.stream.streamId, nil);
         }
     } else if (reason == OTSubscriberVideoEventSubscriberPropertyChanged) {
-        if ( self.handler ){
+        if (self.handler) {
             self.handler(OTReceivedVideoEnabledByLocal, subscriber.stream.streamId, nil);
         }
     }
@@ -572,7 +550,7 @@ receivedSignalType:(NSString*)type
     if (![_subscribers valueForKey:subscriber.stream.streamId]){
         return;
     }
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTRemoteVideoDisableWarning, subscriber.stream.streamId, nil);
     }
 }
@@ -581,13 +559,13 @@ receivedSignalType:(NSString*)type
     if (![_subscribers valueForKey:subscriber.stream.streamId]){
         return;
     }
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTRemoteVideoDisableWarningLifted, subscriber.stream.streamId, nil);
     }
 }
 
 - (void)subscriber:(OTSubscriberKit *)subscriber didFailWithError:(OTError *)error {
-    if ( self.handler ){
+    if (self.handler) {
         self.handler(OTWrapperDidFail, subscriber.stream.streamId, error);
     }
 }

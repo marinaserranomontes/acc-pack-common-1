@@ -19,18 +19,24 @@
 
 @implementation TestSDKWrapperViewController
 
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
     self.wrapper = [[OTSDKWrapper alloc] initWithDataSource:self];
     self.wrapper.delegate = self;
 
+    __weak TestSDKWrapperViewController *weakSelf = self;
+    
     [self.wrapper connectWithHandler:^(OTWrapperSignal signal, NSString *streamId, NSError *error) {
-        if (!error) {
-            [self handleCommunicationWithSignal:signal streamId: streamId];
-        }
-        else {
-            NSLog(@"Error: %@", error.description);
+        __strong TestSDKWrapperViewController *strongSelf = weakSelf;
+        if(strongSelf) {
+            if (!error) {
+                [self handleCommunicationWithSignal:signal streamId: streamId];
+            }
+            else {
+                NSLog(@"Error: %@", error.description);
+            }
         }
     }];
     
@@ -45,7 +51,6 @@
 
 - (void)handleCommunicationWithSignal:(OTWrapperSignal)signal
                          streamId: (NSString *) streamId{
-    
     switch (signal) {
         case OTWrapperDidConnect: {
             NSLog(@"SDKWrapper connected");
@@ -53,7 +58,7 @@
             //start publishing
             UIView * pubView = [self.wrapper startPublishingLocalMedia];
        
-            if (pubView != nil){
+            if (pubView != nil) {
                 pubView.frame = self.publisherView.bounds;
                 [self.publisherView addSubview:pubView];
             }
@@ -75,7 +80,7 @@
             NSLog(@"SDKWrapper: a new remote joined");
             NSError *error;
             UIView * subView = [self.wrapper addRemoteWithStreamId:streamId error:&error];
-            if ( subView ){
+            if (subView) {
                 subView.frame = self.subscriberView.bounds;
                 [self.subscriberView addSubview:subView];
             }
@@ -105,7 +110,7 @@
 - (void)signalReceivedWithType:(NSString *) type
                           data: (NSString *) data
               fromConnectionId: (NSString *) connectionId{
-    NSLog(@"New received signal with type %@", type);
+    NSLog(@"New received signal with type %@ and data %@", type, data);
 }
 
 #pragma mark - OTOneToOneCommunicatorDataSource

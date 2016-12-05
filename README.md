@@ -10,5 +10,5 @@ The Wrapper is required whenever you use any of the OpenTok accelerators for And
 To get started with your development, visit the following sites:
 
 - [Wrapper for Android](./android/README.md)
-- [Wrapper and common accelerator pack for iOS](./iOS/README.md)
+- [Wrapper and common accelerator pack for iOS](./ios/README.md)
 - [Wrapper for JavaScript](./js/README.md)

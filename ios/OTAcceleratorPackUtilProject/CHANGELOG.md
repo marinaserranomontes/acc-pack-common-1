@@ -3,6 +3,11 @@
 The changelog for `acc-pack-common` iOS.
 
 --------------------------------------
+2.0.1
+-----
+
+### Enhancements
+- Add iOS SDK-Wrapper classes
 
 2.0.0
 -----

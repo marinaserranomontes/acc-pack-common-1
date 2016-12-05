@@ -4,13 +4,10 @@ The changelog for the Android, iOS and JS `SDK-Wrapper`.
 
 --------------------------------------
 
-Unreleased
+Unreleased //2.0.0
 -----
 
-### Added
-
-- SDK-wrapper classes for JS, Android, iOS.
-
-### Changed
-
-- .....
+### Enhancements
+- Add iOS SDK-Wrapper classes to the current AccPackUtil
+- Add new JS SDK-Wrapper
+- Add new Android SDK-Wrapper

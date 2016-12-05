@@ -41,8 +41,15 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 @class OTSDKWrapper;
 @protocol OTSDKWrapperDataSource <NSObject>
 
-- (OTSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper;
+- (OTAcceleratorSession *)sessionOfSDKWrapper:(OTSDKWrapper *)wrapper;
 
+@end
+
+@protocol OTWrapperSignalDelegate <NSObject>
+
+- (void)signalReceivedWithType:(NSString *) type
+                          data: (NSString *) data
+                fromConnectionId: (NSString *) connectionId;
 @end
 
 @interface OTSDKWrapper : NSObject
@@ -55,6 +62,8 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
  */
 @property (readonly, weak, nonatomic) id<OTSDKWrapperDataSource> dataSource;
 
+@property (weak, nonatomic) id<OTWrapperSignalDelegate> delegate;
+
 @property (readonly, nonatomic) NSString *name;
 
 - (instancetype)initWithDataSource:(id<OTSDKWrapperDataSource>)dataSource;
@@ -62,16 +71,20 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 - (instancetype)initWithName:(NSString *)name
                   dataSource:(id<OTSDKWrapperDataSource>)dataSource;
 
+//Send a signal
 - (NSError *)broadcastSignalWithType:(NSString *)type;
 
 - (NSError *)broadcastSignalWithType:(NSString *)type
                                 data:(id)string;
 
+- (NSError *)broadcastSignalWithType:(NSString *)type
+                                data:(id)string
+                                 dst: (NSString *)connectionId;
+
+//Connect
 - (void)connectWithHandler:(OTWrapperBlock)handler;
 
-/**
- *  Force un-publish/un-subscribe, disconnect from session and clean everything
- */
+//Force unpublish/unsubscribe/disconnect
 - (void)disconnect;
 
 #pragma mark - connection

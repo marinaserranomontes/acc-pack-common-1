@@ -11,6 +11,8 @@ public class ClientLog {
     public static final String LOG_COMPONENTID = "sdkWrapper";
     public static final String LOG_ACTION_CONNECT = "Connect";
     public static final String LOG_ACTION_DISCONNECT = "Disconnect";
+    public static final String LOG_ACTION_GET_OWN_CONNECTION = "GetOwnConnection";
+    public static final String LOG_ACTION_CHECK_OLDEST_CONNECTION = "CheckOldestConnection";
     public static final String LOG_ACTION_CONNECTIONS_COUNT = "GetConnectionsCount";
     public static final String LOG_ACTION_COMPARE_CONNECTIONS = "CompareConnections";
     public static final String LOG_ACTION_START_PREVIEW = "StartPreview";

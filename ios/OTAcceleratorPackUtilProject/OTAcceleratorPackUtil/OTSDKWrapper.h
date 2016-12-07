@@ -14,8 +14,6 @@ typedef enum: NSUInteger {
     OTWrapperDidFail,
     OTWrapperDidStartPublishing,
     OTWrapperDidStopPublishing,
-    OTWrapperDidStartCaptureMedia,
-    OTWrapperDidStopCaptureMedia,
     OTWrapperDidJoinRemote,
     OTWrapperDidLeaveRemote,
     OTReceivedVideoDisabledByLocal,
@@ -98,7 +96,9 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 
 #pragma mark - publisher
 
-- (UIView *)captureLocalMedia;
+- (UIView *)startCaptureLocalMedia;
+
+- (NSError *)stopCaptureLocalMedia;
 
 - (UIView *)startPublishingLocalMedia;
 
@@ -116,8 +116,10 @@ typedef void (^OTWrapperBlock)(OTWrapperSignal signal, NSString *streamId, NSErr
 
 - (void)switchVideoViewScaleBehavior;
 
-- (OTStreamStatus *) getLocalStreamStatus;
+- (OTStreamStatus *)getLocalStreamStatus;
 
+- (void) setRemoteVideoRendererWithRender: (id<OTVideoRender>)render;
+    
 #pragma mark - subscirbers
 
 - (UIView *)addRemoteWithStreamId:(NSString *)streamId

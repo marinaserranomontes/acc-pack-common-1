@@ -187,7 +187,8 @@
     
     if (self.publisher) {
         //destroy the current publisher
-        [self.publisher release];
+        //[self.publisher release]; //how to destroy the publisher?
+        [self.publisher.view removeFromSuperview];
         self.publisher = nil;
     }
     

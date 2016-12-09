@@ -57,6 +57,7 @@ dependencies {
     }
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:25.0.1'
+    compile 'com.opentok.android:opentok-solutions-logging:+'
     compile 'com.opentok.android:opentok-android-sdk:2.9.+'
 }
 if (project.hasProperty("MAVEN_USERNAME") && project.hasProperty("MAVEN_PASSWORD")) {

@@ -22,6 +22,8 @@
 
 @property (strong, nonatomic) OTWrapperBlock handler;
 
+@property (nonatomic) id<OTVideoRender> customRender;
+
 @end
 
 @implementation OTSDKWrapper
@@ -168,7 +170,7 @@
     return time;
 }
 
-- (UIView *)captureLocalMedia {
+- (UIView *)startCaptureLocalMedia {
     UIView *view;
     
     if (!self.publisher) {
@@ -180,11 +182,24 @@
     return view;
 }
 
+- (NSError *)stopCaptureLocalMedia {
+    NSError *error = nil;
+    
+    if (self.publisher) {
+        //destroy the current publisher
+        //[self.publisher release]; //how to destroy the publisher?
+        [self.publisher.view removeFromSuperview];
+        self.publisher = nil;
+    }
+    
+    return error;
+}
+
 - (UIView *)startPublishingLocalMedia {
     OTError *error = nil;
     UIView *view = nil;
     
-    view = [self captureLocalMedia];
+    view = [self startCaptureLocalMedia];
     //start publishing
     [self.session publish:self.publisher error:&error];
     if (error) {
@@ -281,6 +296,11 @@
         OTStream * stream = [_streams valueForKey:streamId];
         
         OTSubscriber *subscriber = [[OTSubscriber alloc] initWithStream:stream delegate:self];
+        
+        if (_customRender != nil) {
+            [subscriber setVideoRender: _customRender];
+        }
+        
         [_session subscribe:subscriber error:&subscriberError];
         
         if (subscriberError) {
@@ -569,4 +589,10 @@ receivedSignalType:(NSString*)type
         self.handler(OTWrapperDidFail, subscriber.stream.streamId, error);
     }
 }
+
+- (void) setRemoteVideoRendererWithRender: (id<OTVideoRender>)render {
+    //limitation: this renderer will be applied to all the subscribers
+    _customRender = render;
+}
+
 @end

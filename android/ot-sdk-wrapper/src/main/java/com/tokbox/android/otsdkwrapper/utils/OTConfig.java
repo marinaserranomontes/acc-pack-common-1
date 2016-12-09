@@ -17,7 +17,7 @@ public class OTConfig {
     String apiKey; //required
     String name; //optional
     boolean subscribeToSelf = false; //optional
-    boolean subscribeAutomatically = false; //optional
+    boolean subscribeAutomatically = true; //optional
 
     /**
      * Creates a new OTConfig instance using a builder pattern.
@@ -92,7 +92,7 @@ public class OTConfig {
 
         String name; //optional
         boolean subscribeToSelf; //optional
-        boolean subscribeAutomatically; //optional
+        boolean subscribeAutomatically = true; //optional
 
         public OTConfigBuilder(String sessionId, String token, String apikey) {
             this.sessionId = sessionId;

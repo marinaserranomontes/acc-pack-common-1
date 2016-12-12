@@ -65,7 +65,7 @@ _**NOTE:** The sdk wrapper contains logic used for logging. This is used to subm
 
 The callbacks from the OTWrapper are implemented using a block. Some of the signals are: OTWrapperDidConnect, OTWrapperDidDisconnect, OTWrapperDidStartPublishing, OTWrapperDidStopPublishing, OTWrapperDidJoinRemote, OTWrapperDidLeaveRemote, ...
 
-The `OTWrapperSignalDelegate is used to notify the received signals.
+The `OTWrapperSignalDelegate` is used to notify the received signals.
 
 Example: 
 

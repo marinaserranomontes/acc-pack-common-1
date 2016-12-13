@@ -6,8 +6,38 @@
 //
 
 #import "OTSDKWrapper.h"
+#import "LoggingWrapper.h"
 
-@interface OTSDKWrapper() <OTSessionDelegate, OTPublisherDelegate, OTSubscriberKitDelegate, OTSubscriberKitDelegate>
+static NSString* const KLogClientVersion = @"ios-vsol-1.0.0";
+static NSString* const kLogComponentIdentifier = @"sdkWrapper";
+static NSString* const KLogActionConnect = @"Connect";
+static NSString* const KLogActionDisconnect = @"Disconnect";
+static NSString* const KLogActionGetOwnConnection = @"GetOwnConnection";
+static NSString* const KLogActionCheckOldestConnection = @"CheckOldestConnection";
+static NSString* const KLogActionConnectionsCount = @"GetConnectionsCount";
+static NSString* const KLogActionCompareConnections = @"CompareConnections";
+static NSString* const KLogActionStartPreview = @"StartPreview";
+static NSString* const KLogActionStopPreview = @"StopPreview";
+static NSString* const KLogActionStartPublishingMedia = @"StartPublishingMedia";
+static NSString* const KLogActionStopPublishingMedia = @"StopPublishingMedia";
+static NSString* const KLogActionIsLocalMediaEnabled = @"IsLocalMediaEnabled";
+static NSString* const KLogActionEnableLocalMedia = @"EnableLocalMedia";
+static NSString* const KLogActionEnableReceivedMedia = @"EnableReceivedMedia";
+static NSString* const KLogActionIsReceivedMediaEnabled = @"IsReceivedMediaEnabled";
+static NSString* const KLogActionAddRemote = @"AddRemote";
+static NSString* const KLogActionRemoveRemote = @"RemoveRemote";
+static NSString* const KLogActionCycleCamera = @"CycleCamera";
+static NSString* const KLogActionSendSignal = @"SendSignal";
+static NSString* const KLogActionGetLocalStreamStatus = @"GetLocalStreamStatus";
+static NSString* const KLogActionGetRemoteStreamStatus = @"GetRemoteStreamStatus";
+static NSString* const KLogActionSetRemoteStyle = @"SetRemoteStyle";
+static NSString* const KLogActionSetLocalStyle = @"SetLocalStyle";
+static NSString* const KLogActionSetRemoteVideoRenderer = @"SetRemoteVideoRenderer";
+static NSString* const KLogVariationAttempt = @"Attempt";
+static NSString* const KLogVariationSuccess = @"Success";
+static NSString* const KLogVariationFailure = @"Failure";
+
+@interface OTSDKWrapper() <OTSessionDelegate, OTPublisherKitDelegate, OTPublisherDelegate, OTSubscriberKitDelegate, OTSubscriberKitDelegate>
 
 @property (nonatomic) NSString *name;
 @property (weak, nonatomic) OTAcceleratorSession *session;
@@ -62,10 +92,10 @@
 }
 
 - (NSError *)broadcastSignalWithType:(NSString *)type
-                                    data:(id)string {
+                                data:(id)string {
     NSError *error;
     error = [self broadcastSignalWithType:type data:string dst:nil];
-   
+    
     return error;
 }
 
@@ -76,7 +106,7 @@
     if (_session) {
         [_session signalWithType:type
                           string:string
-                        connection: [_connections valueForKey:connectionId] //to send to a specific participant
+                      connection: [_connections valueForKey:connectionId] //to send to a specific participant
                            error:&error];
     }
     
@@ -94,14 +124,23 @@
 }
 
 - (NSError*) connect {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionConnect
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    
     NSError *error = [self.session registerWithAccePack:self];
-   
+    
     return error;
 }
 
 - (void)disconnect {
     OTError *error = nil;
     
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionDisconnect
+                                variation:KLogVariationAttempt
+                               completion:nil];
     //force unpublish
     if (_publisher) {
         [_publisher.view removeFromSuperview];
@@ -149,10 +188,24 @@
 
 #pragma mark - connection
 - (NSString *)selfConnectionId {
+    
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionGetOwnConnection
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    [loggingWrapper.logger logEventAction:KLogActionGetOwnConnection
+                                variation:KLogVariationSuccess                              completion:nil];
     return _selfConnection.connectionId;
 }
 
 - (NSUInteger)connectionCount {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionConnectionsCount
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    [loggingWrapper.logger logEventAction:KLogActionConnectionsCount
+                                variation:KLogVariationSuccess
+                               completion:nil];
     return _internalConnectionCount;
 }
 
@@ -164,40 +217,61 @@
 }
 
 - (NSTimeInterval)intervalWithConnectionId:(NSString *)connectionId {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];    [loggingWrapper.logger logEventAction:KLogActionCompareConnections
+                                                                                                                                                                                 variation:KLogVariationAttempt
+                                                                                                                                                                                completion:nil];
     OTConnection * connection = [_connections valueForKey:connectionId];
     NSTimeInterval time = [self.selfConnection.creationTime timeIntervalSinceDate: connection.creationTime];
     
+    [loggingWrapper.logger logEventAction:KLogActionCompareConnections
+                                variation:KLogVariationSuccess
+                               completion:nil];
     return time;
 }
 
 - (UIView *)startCaptureLocalMedia {
     UIView *view;
-    
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStartPreview
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (!self.publisher) {
         //create a new publisher
         self.publisher = [[OTPublisher alloc] initWithDelegate:self name:self.name];
         view = self.publisher.view;
     }
     
+    [loggingWrapper.logger logEventAction:KLogActionStartPreview
+                                variation:KLogVariationSuccess
+                               completion:nil];
     return view;
 }
 
 - (NSError *)stopCaptureLocalMedia {
     NSError *error = nil;
-    
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStartPreview
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (self.publisher) {
         //destroy the current publisher
         //[self.publisher release]; //how to destroy the publisher?
         [self.publisher.view removeFromSuperview];
         self.publisher = nil;
     }
-    
+    [loggingWrapper.logger logEventAction:KLogActionStopPreview
+                                variation:KLogVariationSuccess
+                               completion:nil];
     return error;
 }
 
 - (UIView *)startPublishingLocalMedia {
     OTError *error = nil;
     UIView *view = nil;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStartPublishingMedia
+                                variation:KLogVariationAttempt
+                               completion:nil];
     
     view = [self startCaptureLocalMedia];
     //start publishing
@@ -205,27 +279,33 @@
     if (error) {
         self.handler(OTWrapperDidFail, nil, error);
     }
-    
     return view;
 }
 
 - (NSError *)stopPublishingLocalMedia {
     OTError *error = nil;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStopPublishingMedia
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (self.publisher) {
         //we suppose we have only a publisher, what happens when we have the screensharing pub too? boolean to indicate it?
         [self.publisher.view removeFromSuperview];
         [self.session unpublish:self.publisher error:&error];
-     
+        
         if (error) {
             self.handler(OTWrapperDidFail, nil, error);
         }
     }
-    
     return error;
 }
 
 - (void)enableLocalMedia:(OTSDKWrapperMediaType)mediaType
                  enabled:(BOOL)enabled {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionEnableLocalMedia
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (_publisher) {
         if (mediaType == OTSDKWrapperMediaTypeAudio) {
             _publisher.publishAudio = enabled;
@@ -236,24 +316,39 @@
             }
         }
     }
+    [loggingWrapper.logger logEventAction:KLogActionEnableLocalMedia
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (BOOL)isLocalMediaEnabled:(OTSDKWrapperMediaType)mediaType {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionIsLocalMediaEnabled
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    BOOL mediaEnabled = false;
     if (_publisher) {
         if (mediaType == OTSDKWrapperMediaTypeAudio) {
-            return _publisher.publishAudio;
+            mediaEnabled = _publisher.publishAudio;
         }
         else {
             if (mediaType == OTSDKWrapperMediaTypeVideo) {
-                return _publisher.publishVideo;
+                mediaEnabled = _publisher.publishVideo;
             }
         }
     }
-    
-    return false;
+    [loggingWrapper.logger logEventAction:KLogActionIsLocalMediaEnabled
+                                variation:KLogVariationSuccess
+                               completion:nil];
+    return mediaEnabled;
 }
 
 - (void)switchCamera {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionCycleCamera
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    
     if (_publisher) {
         AVCaptureDevicePosition newCameraPosition;
         AVCaptureDevicePosition currentCameraPosition;
@@ -268,14 +363,14 @@
         }
         
         [_publisher setCameraPosition:newCameraPosition];
-        
-        if (self.handler) {
-            self.handler(OTCameraChanged, _publisher.stream.streamId, nil);
-        }
     }
 }
 
 - (void)switchVideoViewScaleBehavior {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionSetLocalStyle
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (_publisher) {
         if (_publisher.viewScaleBehavior == OTVideoViewScaleBehaviorFit) {
             _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFill;
@@ -284,11 +379,19 @@
             _publisher.viewScaleBehavior = OTVideoViewScaleBehaviorFit;
         }
     }
+    
+    [loggingWrapper.logger logEventAction:KLogActionSetLocalStyle
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (UIView *)addRemoteWithStreamId:(NSString *)streamId
                             error:(NSError **)error {
     UIView *view = nil;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionAddRemote
+                                variation:KLogVariationAttempt
+                               completion:nil];
     
     //check if the remote exists
     if (!_subscribers[streamId]) {
@@ -315,6 +418,10 @@
 
 - (NSError *)removeRemoteWithStreamId:(NSString *)streamId {
     NSError *unsubscribeError = nil;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionRemoveRemote
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (_subscribers[streamId]) {
         OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
         [subscriber.view removeFromSuperview];
@@ -334,6 +441,10 @@
 - (void)enableReceivedMediaWithStreamId:(NSString *)streamId
                                   media:(OTSDKWrapperMediaType)mediaType
                                 enabled:(BOOL)enabled {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionEnableReceivedMedia
+                                variation:KLogVariationAttempt
+                               completion:nil];
     OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
     if (subscriber) {
         if (mediaType == OTSDKWrapperMediaTypeAudio) {
@@ -346,11 +457,20 @@
         }
         [_subscribers setObject:subscriber forKey:streamId];
     }
+    [loggingWrapper.logger logEventAction:KLogActionEnableReceivedMedia
+                                variation:KLogVariationSuccess
+                               completion:nil];
+    
 }
 
 - (BOOL)isReceivedMediaEnabledWithStreamId:(NSString *)streamId
                                      media:(OTSDKWrapperMediaType)mediaType {
     OTSubscriber *subscriber = [_subscribers valueForKey:streamId];
+    BOOL mediaEnabled = false;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionIsReceivedMediaEnabled
+                                variation:KLogVariationAttempt
+                               completion:nil];
     if (subscriber) {
         if (mediaType == OTSDKWrapperMediaTypeAudio) {
             return subscriber.subscribeToAudio;
@@ -362,11 +482,16 @@
         }
         [_subscribers setObject:subscriber forKey:streamId];
     }
-    
-    return false;
+    [loggingWrapper.logger logEventAction:KLogActionIsReceivedMediaEnabled                                variation:KLogVariationSuccess
+                               completion:nil];
+    return mediaEnabled;
 }
 
 - (void)switchRemoteVideoViewScaleBehaviorWithStreamId:(NSString *)streamId {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionSetRemoteStyle
+                                variation:KLogVariationAttempt
+                               completion:nil];
     OTSubscriber *sub = [_subscribers valueForKey:streamId];
     if (!sub) {
         if (sub.viewScaleBehavior == OTVideoViewScaleBehaviorFit){
@@ -377,24 +502,71 @@
         }
         [_subscribers setObject:sub forKey:streamId];
     }
+    [loggingWrapper.logger logEventAction:KLogActionSetRemoteStyle
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (OTStreamStatus *) getRemoteStreamStatusWithStreamId:(NSString *) streamId {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionGetRemoteStreamStatus
+                                variation:KLogVariationAttempt
+                               completion:nil];
     
     OTSubscriber *sub = [_subscribers valueForKey:streamId];
     if (sub) {
+        [loggingWrapper.logger logEventAction:KLogActionGetRemoteStreamStatus
+                                    variation:KLogVariationSuccess
+                                   completion:nil];
+        
         return [[OTStreamStatus alloc] initWithStreamView: sub.view containerAudo:sub.subscribeToAudio containerVideo:sub.subscribeToVideo hasAudio:sub.stream.hasAudio hasVideo:sub.stream.hasVideo type:sub.stream.videoType size:sub.stream.videoDimensions];
-    }
     
+    }
+    [loggingWrapper.logger logEventAction:KLogActionGetRemoteStreamStatus
+                                variation:KLogVariationFailure
+                               completion:nil];
     return nil;
 }
 
 - (OTStreamStatus *) getLocalStreamStatus {
-    return [[OTStreamStatus alloc] initWithStreamView:_publisher.view containerAudo:_publisher.publishAudio containerVideo:_publisher.publishVideo hasAudio:_publisher.stream.hasAudio hasVideo:_publisher.stream.hasVideo type:_publisher.stream.videoType size:_publisher.stream.videoDimensions];
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionGetLocalStreamStatus
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    if (_publisher) {
+        [loggingWrapper.logger logEventAction:KLogActionGetLocalStreamStatus
+                                    variation:KLogVariationSuccess
+                                   completion:nil];
+        
+        return [[OTStreamStatus alloc] initWithStreamView:_publisher.view containerAudo:_publisher.publishAudio containerVideo:_publisher.publishVideo hasAudio:_publisher.stream.hasAudio hasVideo:_publisher.stream.hasVideo type:_publisher.stream.videoType size:_publisher.stream.videoDimensions];
+    }
+    [loggingWrapper.logger logEventAction:KLogActionGetLocalStreamStatus
+                                variation:KLogVariationFailure
+                               completion:nil];
+    return nil;
+}
+
+- (void) setRemoteVideoRendererWithRender: (id<OTVideoRender>)render {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionSetRemoteVideoRenderer
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    //limitation: this renderer will be applied to all the subscribers
+    _customRender = render;
+    
+    [loggingWrapper.logger logEventAction:KLogActionSetRemoteVideoRenderer
+                                variation:KLogVariationSuccess
+                               completion:nil];
+    
 }
 
 #pragma mark - Private Methods
 -(void) compareConnectionTimeWithConnection: (OTConnection *)connection {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionCompareConnections
+                                variation:KLogVariationAttempt
+                               completion:nil];
+    
     NSComparisonResult result = [connection.creationTime compare:_selfConnection.creationTime];
     
     if (result==NSOrderedAscending) {
@@ -407,6 +579,10 @@
         else
             NSLog(@"Both dates are same");
     }
+    
+    [loggingWrapper.logger logEventAction:KLogActionCompareConnections
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 #pragma mark - OTSessionDelegate
@@ -415,12 +591,21 @@
         self.handler(OTWrapperDidConnect, nil, nil);
     }
     _selfConnection = session.connection;
+    
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionConnect
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (void)sessionDidDisconnect:(OTSession *)session {
     if (self.handler) {
         self.handler(OTWrapperDidDisconnect, nil, nil);
     }
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionDisconnect
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (void)  session:(OTSession*) session
@@ -501,12 +686,18 @@ receivedSignalType:(NSString*)type
     if (self.handler) {
         self.handler(OTWrapperDidFail, publisher.stream.streamId, error);
     }
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    _publisher = nil;
 }
 
 - (void)publisher:(OTPublisherKit*)publisher streamCreated:(OTStream*)stream {
     if (self.handler) {
         self.handler(OTWrapperDidStartPublishing, publisher.stream.streamId, nil);
     }
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStartPublishingMedia
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 - (void)publisher:(OTPublisherKit*)publisher streamDestroyed:(OTStream*)stream {
@@ -514,6 +705,22 @@ receivedSignalType:(NSString*)type
         self.handler(OTWrapperDidStopPublishing, publisher.stream.streamId, nil);
     }
     self.publisher = nil; //cleanup publisher
+    
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionStopPublishingMedia
+                                variation:KLogVariationSuccess
+                               completion:nil];
+}
+
+- (void)publisher:(OTPublisher *)publisher didChangeCameraPosition:(AVCaptureDevicePosition)position {
+    
+    if (self.handler) {
+        self.handler(OTCameraChanged, _publisher.stream.streamId, nil);
+    }
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionCycleCamera
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 #pragma mark - OTSubscriberKitDelegate
@@ -521,10 +728,21 @@ receivedSignalType:(NSString*)type
     if (self.handler) {
         self.handler(OTWrapperDidJoinRemote, subscriber.stream.streamId, nil);
     }
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionAddRemote
+                                variation:KLogVariationSuccess
+                               completion:nil];
+}
+
+- (void)subscriberDidDisconnectFromStream:(OTSubscriberKit *)subscriber {
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    [loggingWrapper.logger logEventAction:KLogActionRemoveRemote
+                                variation:KLogVariationSuccess
+                               completion:nil];
 }
 
 -(void)subscriberVideoDisabled:(OTSubscriber *)subscriber reason:(OTSubscriberVideoEventReason)reason {
-    if (![_subscribers valueForKey:subscriber.stream.streamId]){
+    if (![_subscribers valueForKey:subscriber.stream.streamId]) {
         return;
     }
     
@@ -588,11 +806,37 @@ receivedSignalType:(NSString*)type
     if (self.handler) {
         self.handler(OTWrapperDidFail, subscriber.stream.streamId, error);
     }
+    
+    NSInteger errorCode = error.code;
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
+    
+    switch (errorCode) {
+        case OTSubscriberInternalError:
+            [_subscribers removeObjectForKey:subscriber.stream.streamId];
+            break;
+        case OTConnectionTimedOut:
+            [loggingWrapper.logger logEventAction:KLogActionAddRemote
+                                        variation:KLogVariationFailure
+                                       completion:nil];
+            if (_session) {
+                OTError *error;
+                [ _session subscribe:subscriber error:&error];
+            }
+            break;
+        case OTSubscriberWebRTCError:
+            [_subscribers removeObjectForKey:subscriber.stream.streamId];
+            break;
+        case OTSubscriberServerCannotFindStream:
+            [_subscribers removeObjectForKey:subscriber.stream.streamId];
+            break;
+        case OTSubscriberSessionDisconnected:
+            [_subscribers removeObjectForKey:subscriber.stream.streamId];
+        default:
+            [_subscribers removeObjectForKey:subscriber.stream.streamId];
+        break;
+
+    }
 }
 
-- (void) setRemoteVideoRendererWithRender: (id<OTVideoRender>)render {
-    //limitation: this renderer will be applied to all the subscribers
-    _customRender = render;
-}
 
 @end

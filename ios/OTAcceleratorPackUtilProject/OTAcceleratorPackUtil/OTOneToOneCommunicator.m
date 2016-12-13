@@ -9,6 +9,7 @@
 
 #import <Opentok/OpenTok.h>
 #import <OTKAnalytics/OTKLogger.h>
+#import "LoggingWrapper.h"
 
 static NSString* const KLogClientVersion = @"ios-vsol-1.1.0";
 static NSString* const kLogComponentIdentifier = @"oneToOneCommunication";
@@ -19,27 +20,6 @@ static NSString* const KLogVariationAttempt = @"Attempt";
 static NSString* const KLogVariationSuccess = @"Success";
 static NSString* const KLogVariationFailure = @"Failure";
 
-@interface LoggingWrapper: NSObject
-@property (nonatomic) OTKLogger *logger;
-@end
-
-@implementation LoggingWrapper
-
-+ (instancetype)sharedInstance {
-    
-    static LoggingWrapper *sharedInstance;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[LoggingWrapper alloc] init];
-        sharedInstance.logger = [[OTKLogger alloc] initWithClientVersion:KLogClientVersion
-                                                                  source:[[NSBundle mainBundle] bundleIdentifier]
-                                                             componentId:kLogComponentIdentifier
-                                                                    guid:[[NSUUID UUID] UUIDString]];
-    });
-    return sharedInstance;
-}
-
-@end
 
 @interface OTOneToOneCommunicator() <OTSessionDelegate, OTSubscriberKitDelegate, OTPublisherDelegate>
 @property (nonatomic) BOOL isCallEnabled;
@@ -65,10 +45,10 @@ static NSString* const KLogVariationFailure = @"Failure";
 - (instancetype)initWithName:(NSString *)name
                   dataSource:(id<OTOneToOneCommunicatorDataSource>)dataSource {
     
-    [[LoggingWrapper sharedInstance].logger logEventAction:KLogActionInitialize variation:KLogVariationAttempt completion:nil];
+    [[LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion].logger logEventAction:KLogActionInitialize variation:KLogVariationAttempt completion:nil];
     
     if (!dataSource) {
-        [[LoggingWrapper sharedInstance].logger logEventAction:KLogActionInitialize variation:KLogVariationFailure completion:nil];
+        [[LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion].logger logEventAction:KLogActionInitialize variation:KLogVariationFailure completion:nil];
         return nil;
     }
     
@@ -76,14 +56,14 @@ static NSString* const KLogVariationFailure = @"Failure";
         _name = name;
         _dataSource = dataSource;
         _session = [_dataSource sessionOfOTOneToOneCommunicator:self];
-        [[LoggingWrapper sharedInstance].logger logEventAction:KLogActionInitialize variation:KLogVariationSuccess completion:nil];
+        [[LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion].logger logEventAction:KLogActionInitialize variation:KLogVariationSuccess completion:nil];
     }
     return self;
 }
 
 - (NSError *)connect {
     
-    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstance];
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
     [loggingWrapper.logger logEventAction:KLogActionStartCommunication
                                 variation:KLogVariationAttempt
                                completion:nil];
@@ -142,7 +122,7 @@ static NSString* const KLogVariationFailure = @"Failure";
         self.subscriberView = nil;
     }
     
-    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstance];
+    LoggingWrapper *loggingWrapper = [LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion];
     NSError *disconnectError = [self.session deregisterWithAccePack:self];
     if (!disconnectError) {
         [loggingWrapper.logger logEventAction:KLogActionEndCommunication
@@ -173,7 +153,7 @@ static NSString* const KLogVariationFailure = @"Failure";
 #pragma mark - OTSessionDelegate
 -(void)sessionDidConnect:(OTSession*)session {
     
-    [[LoggingWrapper sharedInstance].logger setSessionId:session.sessionId
+    [[LoggingWrapper sharedInstanceWithComponentId:kLogComponentIdentifier withClientVersion: KLogClientVersion].logger setSessionId:session.sessionId
                                             connectionId:session.connection.connectionId
                                                partnerId:@([self.session.apiKey integerValue])];
     

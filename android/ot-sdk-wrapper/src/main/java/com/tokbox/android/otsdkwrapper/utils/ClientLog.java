@@ -37,7 +37,7 @@ public class ClientLog {
     public static final String LOG_ACTION_SET_REMOTE_STYLE = "SetRemoteStyle";
     public static final String LOG_ACTION_SET_LOCAL_STYLE = "SetLocalStyle";
     public static final String LOG_ACTION_SET_REMOTE_VIDEO_RENDERER = "SetRemoteVideoRenderer";
-    public static final String LOG_ACTION_SET_REMOTE_SCREEN_RENDERER = "SetRemoteVideoRenderer";
+    public static final String LOG_ACTION_SET_REMOTE_SCREEN_RENDERER = "SetRemoteScreenRenderer";
     public static final String LOG_ACTION_RESUME = "Resume";
     public static final String LOG_ACTION_PAUSE = "Pause";
 

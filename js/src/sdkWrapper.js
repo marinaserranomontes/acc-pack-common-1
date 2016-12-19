@@ -92,6 +92,7 @@ class OpenTokSDK {
    * @param {String} credentials.token
    */
   constructor(credentials) {
+    logging.initLogAnalytics(window.location.origin, credentials.sessionId, null, credentials.apiKey);
     this.credentials = validateCredentials(credentials);
     stateMap.set(this, new State());
     this.session = OT.initSession(credentials.apiKey, credentials.sessionId);
@@ -104,14 +105,18 @@ class OpenTokSDK {
    * @returns {Boolean}
    */
   isMe(connection) {
+    logging.log(logging.logAction.isMe, logging.logVariation.attempt);
     const { session } = this;
-    return session && session.connection.connectionId === connection.connectionId;
+    var isMe = session && session.connection.connectionId === connection.connectionId;
+    logging.log(logging.logAction.isMe, logging.logVariation.success);
+    return isMe;
   }
 
   /**
    * Wrap OpenTok session events
    */
   setInternalListeners() {
+    logging.log(logging.logAction.setInternalListeners, logging.logVariation.attempt);
     /**
      * Wrap session events and update state when streams are created
      * or destroyed
@@ -119,6 +124,7 @@ class OpenTokSDK {
     const state = stateMap.get(this);
     this.session.on('streamCreated', ({ stream }) => state.addStream(stream));
     this.session.on('streamDestroyed', ({ stream }) => state.removeStream(stream));
+    logging.log(logging.logAction.setInternalListeners, logging.logVariation.success);
   }
 
   /**
@@ -153,11 +159,14 @@ class OpenTokSDK {
    * @param {Boolean} enable
    */
   enablePublisherAudio(enable) {
+    logging.log(logging.logAction.enablePublisherAudio, logging.logVariation.attempt);
     const { publishers } = stateMap.get(this).currentPubSub();
     Object.keys(publishers.camera).forEach((publisherId) => {
       if (this.publisherIsReady(publishers.camera[publisherId])) {
         publishers.camera[publisherId].publishAudio(enable);
+        logging.log(logging.logAction.enablePublisherAudio, logging.logVariation.success);
       } else {
+        logging.log(logging.logAction.enablePublisherAudio, logging.logVariation.fail);
         logging.message('Could not toggle publisher audio. Publisher has not finished loading.')
       }
     });
@@ -168,12 +177,15 @@ class OpenTokSDK {
    * @param {Boolean} enable
    */
   enablePublisherVideo(enable) {
+    logging.log(logging.logAction.enablePublisherVideo, logging.logVariation.attempt);
     const { publishers } = stateMap.get(this).currentPubSub();
     Object.keys(publishers.camera).forEach((publisherId) => {
       if (this.publisherIsReady(publishers.camera[publisherId])) {
         publishers.camera[publisherId].publishVideo(enable);
+        logging.log(logging.logAction.enablePublisherVideo, logging.logVariation.success);
       } else {
         logging.message('Could not toggle publisher video. Publisher has not finished loading.')
+        logging.log(logging.logAction.enablePublisherVideo, logging.logVariation.fail);
       }
     });
   }
@@ -184,10 +196,12 @@ class OpenTokSDK {
    * @param {Boolean} enable
    */
   enableSubscriberAudio(streamId, enable) {
+    logging.log(logging.logAction.enableSubscriberAudio, logging.logVariation.attempt);
     const { streamMap, subscribers } = stateMap.get(this).all();
     const subscriberId = streamMap[streamId];
     const subscriber = subscribers.camera[subscriberId] || subscribers.screen[subscriberId];
     subscriber && subscriber.subscribeToVideo(enable);
+    logging.log(logging.logAction.enableSubscriberAudio, logging.logVariation.success);
   }
 
   /**
@@ -196,10 +210,12 @@ class OpenTokSDK {
    * @param {Boolean} enable
    */
   enableSubscriberVideo(streamId, enable) {
+    logging.log(logging.logAction.enableSubscriberVideo, logging.logVariation.attempt);
     const { streamMap, subscribers } = stateMap.get(this).all();
     const subscriberId = streamMap[streamId];
     const subscriber = subscribers.camera[subscriberId] || subscribers.screen[subscriberId];
     subscriber && subscriber.subscribeToAudio(enable);
+    logging.log(logging.logAction.enableSubscriberVideo, logging.logVariation.success);
   }
 
   /**
@@ -212,11 +228,13 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: Object, reject: Error>
    */
   publish(element, properties, eventListeners = null, preview = false) {
+    logging.log(logging.logAction.publish, logging.logVariation.attempt);
     return new Promise((resolve, reject) => {
       initPublisher(element, properties) // eslint-disable-next-line no-confusing-arrow
         .then((publisher) => {
           eventListeners && bindListeners(publisher, this, eventListeners);
           if (preview) {
+            logging.log(logging.logAction.publish, logging.logVariation.success);
             resolve(publisher);
           } else {
             this.publishPreview(publisher)
@@ -233,12 +251,20 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: empty, reject: Error>
    */
   publishPreview(publisher) {
+    logging.log(logging.logAction.publishPreview, logging.logVariation.attempt);
     return new Promise((resolve, reject) => {
       const state = stateMap.get(this);
       this.session.publish(publisher, (error) => {
         const type = publisher.stream.videoType;
         state.addPublisher(type, publisher);
-        error ? reject(error) : resolve(publisher);
+        if (error) {
+          reject(error);
+          logging.log(logging.logAction.publishPreview, logging.logVariation.fail);
+        }
+        else {
+          resolve(publisher);
+          logging.log(logging.logAction.publishPreview, logging.logVariation.success);
+        }
       });
     });
   }
@@ -248,10 +274,12 @@ class OpenTokSDK {
    * @param {Object} publisher - An OpenTok publisher object
    */
   unpublish(publisher) {
+    logging.log(logging.logAction.unpublish, logging.logVariation.attempt);
     const type = publisher.stream.videoType;
     const state = stateMap.get(this);
     this.session.unpublish(publisher);
     state.removePublisher(type, publisher);
+    logging.log(logging.logAction.unpublish, logging.logVariation.success);
   }
 
   /**
@@ -285,15 +313,18 @@ class OpenTokSDK {
    * https://tokbox.com/developer/sdks/js/reference/Session.html#subscribe
    */
   subscribe(stream, container, properties, eventListeners) {
+    logging.log(logging.logAction.subscribe, logging.logVariation.attempt);
     const state = stateMap.get(this);
     return new Promise((resolve, reject) => {
       const subscriber = this.session.subscribe(stream, container, properties, (error) => {
         if (error) {
           reject(error);
+          logging.log(logging.logAction.subscribe, logging.logVariation.fail);
         } else {
           state.addSubscriber(subscriber);
           eventListeners && bindListeners(subscriber, this, eventListeners);
           resolve(subscriber);
+          logging.log(logging.logAction.subscribe, logging.logVariation.success);
         }
       });
     });
@@ -305,11 +336,13 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: empty>
    */
   unsubscribe(subscriber) {
+    logging.log(logging.logAction.unsubscribe, logging.logVariation.attempt);
     const state = stateMap.get(this);
     return new Promise((resolve) => {
       this.session.unsubscribe(subscriber);
       state.removeSubscriber(subscriber);
       resolve();
+      logging.log(logging.logAction.unsubscribe, logging.logVariation.success);
     });
   }
 
@@ -320,12 +353,22 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: empty, reject: Error>
    */
   connect(eventListeners) {
+    logging.log(logging.logAction.connect, logging.logVariation.attempt);
     this.off();
     eventListeners && this.on(eventListeners);
     return new Promise((resolve, reject) => {
       const { token } = this.credentials;
       this.session.connect(token, (error) => {
-        error ? reject(error) : resolve();
+        if (error) {
+          reject(error);
+          logging.log(logging.logAction.connect, logging.logVariation.fail);
+        }
+        else {
+          const { sessionId, apiKey } = this.session;
+          logging.updateLogAnalytics(sessionId, this.session.connection.connectionId, this.session.apiKey);
+          logging.log(logging.logAction.connect, logging.logVariation.success);
+          resolve();
+        }
       });
     });
   }
@@ -336,9 +379,17 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: empty, reject: Error>
    */
   forceDisconnect(connection) {
+    logging.log(logging.logAction.forceDisconnect, logging.logVariation.attempt);
     return new Promise((resolve, reject) => {
       this.session.forceDisconnect(connection, (error) => {
-        error ? reject(error) : resolve();
+        if (error) {
+          reject(error);
+          logging.log(logging.logAction.forceDisconnect, logging.logVariation.fail);
+        }
+        else {
+          resolve();
+          logging.log(logging.logAction.forceDisconnect, logging.logVariation.success);
+        }
       });
     });
   }
@@ -349,9 +400,17 @@ class OpenTokSDK {
    * @returns {Promise} <resolve: empty, reject: Error>
    */
   forceUnpublish(stream) {
+    logging.log(logging.logAction.forceUnpublish, logging.logVariation.attempt);
     return new Promise((resolve, reject) => {
       this.session.forceUnpublish(stream, (error) => {
-        error ? reject(error) : resolve();
+        if (error) {
+          reject(error);
+          logging.log(logging.logAction.forceUnpublish, logging.logVariation.fail);
+        }
+        else {
+          resolve();
+          logging.log(logging.logAction.forceUnpublish, logging.logVariation.success);
+        }
       });
     });
   }
@@ -366,11 +425,19 @@ class OpenTokSDK {
    * https://tokbox.com/developer/guides/signaling/js/
    */
   signal(type, signalData, to) {
+    logging.log(logging.logAction.signal, logging.logVariation.attempt);
     const data = signalData && JSON.stringify(signalData) || undefined;
     const signal = to ? { type, data, to } : { type, data };
     return new Promise((resolve, reject) => {
       this.session.signal(signal, (error) => {
-        error ? reject(error) : resolve();
+        if (error) {
+          reject(error);
+          logging.log(logging.logAction.signal, logging.logVariation.fail);
+        }
+        else {
+          resolve();
+          logging.log(logging.logAction.signal, logging.logVariation.success);
+        }
       });
     });
   }
@@ -379,8 +446,10 @@ class OpenTokSDK {
    * Disconnect from the OpenTok session
    */
   disconnect() {
+    logging.log(logging.logAction.disconnect, logging.logVariation.attempt);
     this.session.disconnect();
     stateMap.get(this).reset();
+    logging.log(logging.logAction.disconnect, logging.logVariation.success);
   }
 
   /**

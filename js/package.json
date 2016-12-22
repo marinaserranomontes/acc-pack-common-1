@@ -32,6 +32,6 @@
     "eslint-plugin-import": "^1.16.0",
     "eslint-plugin-jsx-a11y": "^2.2.3",
     "eslint-plugin-react": "^6.4.1",
-    "opentok-solutions-logging": "^1.0.6"
+    "opentok-solutions-logging": "^1.0.7"
   }
 }

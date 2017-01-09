@@ -795,7 +795,7 @@ public class OTWrapper {
 
   private synchronized void publishIfReady() {
     Log.d(LOG_TAG, "publishIfReady: " + mSessionConnection + ", " + mPublisher + ", " +
-      startPublishing);
+      startPublishing + ", " + isPreviewing);
     if (mSession != null && mSessionConnection != null && mPublisher != null && startPublishing) {
       if (!isPreviewing) {
         attachPublisherView();
@@ -954,7 +954,7 @@ public class OTWrapper {
   }
 
   private void attachPublisherView() {
-    if (mBasicListeners != null && !mBasicListeners.isEmpty()) {
+    if (mPublisher != null && mBasicListeners != null && !mBasicListeners.isEmpty()) {
       for (BasicListener listener: mBasicListeners) {
         ((RetriableBasicListener)listener).onPreviewViewReady(SELF, mPublisher.getView());
       }
@@ -962,7 +962,7 @@ public class OTWrapper {
   }
 
   private void attachPublisherScreenView() {
-    if (mBasicListeners != null && !mBasicListeners.isEmpty()) {
+    if (mScreenPublisher != null && mBasicListeners != null && !mBasicListeners.isEmpty()) {
       for (BasicListener listener: mBasicListeners) {
         ((RetriableBasicListener)listener).onPreviewViewReady(SELF, mScreenPublisher.getView());
       }
@@ -970,7 +970,7 @@ public class OTWrapper {
   }
 
   private void dettachPublisherView() {
-    if (mBasicListeners != null && !mBasicListeners.isEmpty()) {
+    if (mPublisher != null && mBasicListeners != null && !mBasicListeners.isEmpty()) {
       for (BasicListener listener: mBasicListeners) {
         ((RetriableBasicListener)listener).onPreviewViewDestroyed(SELF, mPublisher.getView());
       }
@@ -978,7 +978,7 @@ public class OTWrapper {
   }
 
   private void dettachPublisherScreenView() {
-    if (mBasicListeners != null && !mBasicListeners.isEmpty()) {
+    if (mScreenPublisher != null && mBasicListeners != null && !mBasicListeners.isEmpty()) {
       for (BasicListener listener: mBasicListeners) {
         ((RetriableBasicListener)listener).onPreviewViewDestroyed(SELF, mScreenPublisher.getView());
       }
@@ -1006,8 +1006,6 @@ public class OTWrapper {
           }
         }
       }
-
-
     }
   }
 
@@ -1127,7 +1125,8 @@ public class OTWrapper {
     @Override
     public void onConnected(Session session) {
       mSessionConnection = session.getConnection();
-      Log.d(LOG_TAG, "onConnected: " + mSessionConnection.getData());
+      Log.d(LOG_TAG, "onConnected: " + mSessionConnection.getData() +
+        ". listeners: " + mBasicListeners );
 
       mConnectionsCount++;
 

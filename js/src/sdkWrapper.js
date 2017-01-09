@@ -107,7 +107,7 @@ class OpenTokSDK {
   isMe(connection) {
     logging.log(logging.logAction.isMe, logging.logVariation.attempt);
     const { session } = this;
-    var isMe = session && session.connection.connectionId === connection.connectionId;
+    const isMe = session && session.connection.connectionId === connection.connectionId;
     logging.log(logging.logAction.isMe, logging.logVariation.success);
     return isMe;
   }

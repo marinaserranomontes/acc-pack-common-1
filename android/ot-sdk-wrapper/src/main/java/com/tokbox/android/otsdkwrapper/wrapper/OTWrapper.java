@@ -258,6 +258,22 @@ public class OTWrapper {
   }
 
   /**
+   * Whether the local is sharing media (<code>true</code>) or not (
+   * <code>false</code>).
+   */
+  public boolean isPublishing() {
+    return isPublishing;
+  }
+
+  /**
+   * Whether the local is previewing (<code>true</code>) or not (
+   * <code>false</code>).
+   */
+  public boolean isPreviewing() {
+    return isPreviewing;
+  }
+
+  /**
    * Call to stop the camera's video in the Preview's view.
    */
   public void stopPreview() {
@@ -879,6 +895,62 @@ public class OTWrapper {
     //byDefault
     mScreenPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
                               BaseVideoRenderer.STYLE_VIDEO_FILL);
+  }
+
+  /**
+   * Rounds to the smallest FPS. Could round to the closest one instead!
+   * @param FPS
+   */
+  private Publisher.CameraCaptureFrameRate getFPS(int FPS) {
+    Publisher.CameraCaptureFrameRate returnedValue;
+    if (FPS < 7) {
+      returnedValue = Publisher.CameraCaptureFrameRate.FPS_1;
+    } else if (FPS < 15) {
+      returnedValue = Publisher.CameraCaptureFrameRate.FPS_7;
+    } else if (FPS < 30) {
+      returnedValue = Publisher.CameraCaptureFrameRate.FPS_15;
+    } else {
+      returnedValue = Publisher.CameraCaptureFrameRate.FPS_30;
+    }
+    return returnedValue;
+  }
+
+  /**
+   * (Tries) to set the FPS of the shared video stream to the passed one. The FPS is rounded to
+   * the nearest supported one.
+   * @param FPS
+   */
+  public void setPublishingFPS(int FPS) {
+    Log.d(LOG_TAG, "setSharingFPS: " + mPublisher);
+    Publisher.CameraCaptureFrameRate frameRate = getFPS(FPS);
+    if (mPublisher != null) {
+      int currentCamera = mPublisher.getCameraId();
+      PreviewConfig newPreview;
+      if (mPreviewConfig != null) {
+        mPreviewConfig.setFrameRate(frameRate);
+      } else {
+        mPreviewConfig = new PreviewConfig.PreviewConfigBuilder().framerate(frameRate).build();
+      }
+      newPreview = mPreviewConfig;
+      boolean isPublishing = this.isPublishing;
+      boolean isPreviewing = this.isPreviewing;
+      if (isPublishing) {
+        stopPublishingMedia(false);
+      }
+      if (isPreviewing) {
+        stopPreview();
+      }
+      mPublisher = null;
+      if (isPreviewing) {
+        startPreview(newPreview);
+      }
+      if (isPublishing) {
+        startPublishingMedia(newPreview, false);
+      }
+      if (mPublisher != null) {
+        mPublisher.setCameraId(currentCamera);
+      }
+    }
   }
 
   private void attachPublisherView() {
